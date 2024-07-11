@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Estado de Solicitud</title>
+  <script>
+    async function fetchStatus(id, method) {
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbykBymXIFcR4Rl7sYZwZkBPIM_J3WjZDjd6QrwqJ3iTTpbl5Od_Ff6dd5n06UA5Ic1Q_w/exec';
+      const url = `${scriptURL}?id=${id}&method=${method}`;
+
+      try {
+        const response = await fetch(url);
+        const statusText = await response.text();
+        return statusText;
+      } catch (error) {
+        return 'Error al conectar con el servicio' + error;
+      }
+    }
+
+    async function handlePageLoad() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      const method = urlParams.get('method');
+
+      if (id && method) {
+        const statusText = await fetchStatus(id, method);
+        document.getElementById('status').textContent = statusText;
+      } else {
+        document.getElementById('status').textContent = 'ID o método no proporcionado';
+      }
+    }
+
+    window.onload = handlePageLoad;
+  </script>
+</head>
+<body>
+  <h1>Consulta o Actualiza el Estado de tu Solicitud</h1>
+  <p id="status">Cargando...</p>
+</body>
+</html>
