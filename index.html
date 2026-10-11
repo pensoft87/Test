@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Producción</title>
+<style>
+  :root{--bg:#f5f6f8;--card:#fff;--tx:#1f2430;--mut:#6b7280;--bd:#e3e6ec;--pri:#2563eb;--pri2:#1d4ed8;--ok:#15803d;--bad:#b91c1c;--warn:#b45309}
+  @media (prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b2030;--tx:#e8eaf0;--mut:#9aa3b5;--bd:#2c3347;--pri:#3b82f6;--pri2:#60a5fa;--ok:#4ade80;--bad:#f87171;--warn:#fbbf24}}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+  header{background:var(--card);border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+  h1{font-size:18px;margin:0}
+  nav{display:flex;gap:4px;flex-wrap:wrap}
+  nav button{background:none;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--mut);font:inherit;font-weight:600}
+  nav button.on{background:var(--pri);color:#fff}
+  main{max-width:1000px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+  h2{font-size:16px;margin:0 0 12px}
+  h3{font-size:14px;margin:16px 0 8px}
+  label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px;font-weight:600}
+  input,select,textarea{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));align-items:end;margin-bottom:10px}
+  button.b{background:var(--pri);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
+  button.b:hover{background:var(--pri2)}
+  button.g{background:none;color:var(--tx);border:1px solid var(--bd)}
+  button.g:hover{background:var(--bg)}
+  button.x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:16px;padding:4px 8px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:middle}
+  th{font-size:12px;color:var(--mut);text-transform:uppercase}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .tw{overflow-x:auto}
+  .mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+  .big{font-size:26px;font-weight:700}
+  .kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0}
+  .kpi{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
+  .kpi small{color:var(--mut);display:block}
+  .kpi b{font-size:18px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  dialog{border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);width:min(760px,96vw);max-height:92vh;padding:18px}
+  dialog::backdrop{background:rgba(0,0,0,.5)}
+  pre.ins{white-space:pre-wrap;font:inherit;background:var(--bg);padding:10px;border-radius:8px;margin:0}
+  .empty{color:var(--mut);padding:12px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏭 Mi Producción</h1>
+  <nav id="nav">
+    <button data-t="mat" class="on">Materias primas</button>
+    <button data-t="prod">Productos</button>
+    <button data-t="cost">¿Cuánto cuesta?</button>
+    <button data-t="cap">¿Cuánto puedo producir?</button>
+    <button data-t="data">Respaldo</button>
+  </nav>
+</header>
+<main id="main"></main>
+
+<dialog id="dlg"></dialog>
+
+<script>
+// ---------- Unidades ----------
+const UNITS = {
+  kg:{n:'kg',f:'masa',k:1000}, g:{n:'g',f:'masa',k:1}, mg:{n:'mg',f:'masa',k:0.001},
+  lb:{n:'lb',f:'masa',k:453.592}, oz:{n:'oz',f:'masa',k:28.3495},
+  L:{n:'L',f:'volumen',k:1000}, ml:{n:'ml',f:'volumen',k:1}, gal:{n:'galón',f:'volumen',k:3785.41},
+  taza:{n:'taza',f:'volumen',k:240}, cda:{n:'cucharada',f:'volumen',k:15}, cdta:{n:'cucharadita',f:'volumen',k:5},
+  floz:{n:'fl oz',f:'volumen',k:29.5735},
+  und:{n:'unidad',f:'conteo',k:1}, par:{n:'par',f:'conteo',k:2}, doc:{n:'docena',f:'conteo',k:12}, cto:{n:'ciento',f:'conteo',k:100}
+};
+const FAMS = {masa:'Peso',volumen:'Volumen',conteo:'Conteo'};
+const fam = u => UNITS[u].f;
+const unitOpts = (sel, family) => Object.entries(UNITS).filter(([k,v])=>!family||v.f===family)
+  .map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v.n}</option>`).join('');
+const unitOptsGrouped = sel => Object.keys(FAMS).map(f=>`<optgroup label="${FAMS[f]}">${unitOpts(sel,f)}</optgroup>`).join('');
+
+// ---------- Estado ----------
+const KEY='miproduccion.v1';
+let S = {materials:[], products:[]};
+try{ const r=localStorage.getItem(KEY); if(r) S=JSON.parse(r); }catch(e){}
+const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} };
+const uid=()=>Math.random().toString(36).slice(2,9);
+const mat=id=>S.materials.find(m=>m.id===id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
+const money=v=>(isFinite(v)?v:0).toLocaleString('es',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=(v,d=3)=>(+v.toFixed(d)).toLocaleString('es',{maximumFractionDigits:d});
+
+// Costo por unidad base (g, ml, und) de una materia prima
+const baseCost=m=>m.cost/UNITS[m.unit].k;
+const lineCost=l=>{const m=mat(l.matId);return m?l.qty*UNITS[l.unit].k*baseCost(m):0};
+const stockBase=m=>num(m.stock)*UNITS[m.stockUnit||m.unit].k;
+function productCosts(p){
+  const mats=p.recipe.reduce((a,l)=>a+lineCost(l),0);
+  const other=p.others.reduce((a,o)=>a+num(o.amount),0);
+  return {mats,other,total:mats+other};
+}
+
+// ---------- Navegación ----------
+let tab='mat';
+document.getElementById('nav').onclick=e=>{
+  const t=e.target.dataset.t; if(!t) return; tab=t;
+  [...e.currentTarget.children].forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  render();
+};
+const $=s=>document.querySelector(s);
+function render(){
+  ({mat:viewMat,prod:viewProd,cost:viewCost,cap:viewCap,data:viewData})[tab]();
+}
+
+// ---------- Materias primas ----------
+function viewMat(){
+  $('#main').innerHTML=`
+  <div class="card"><h2>Nueva materia prima</h2>
+    <form id="fm">
+      <div class="row">
+        <div><label>Nombre</label><input name="name" required placeholder="Ej: Harina"></div>
+        <div><label>Unidad de compra</label><select name="unit">${unitOptsGrouped('kg')}</select></div>
+        <div><label>Costo por esa unidad ($)</label><input name="cost" type="number" step="any" min="0" required></div>
+        <div><label>Existencia actual</label><input name="stock" type="number" step="any" min="0" value="0"></div>
+        <div><button class="b">Agregar</button></div>
+      </div>
+    </form>
+    <p class="mut" style="margin:0;font-size:13px">La compras en una unidad (ej. kg) y en las fórmulas puedes usarla en una menor de la misma familia (g, mg, oz…).</p>
+  </div>
+  <div class="card"><h2>Inventario de materias primas</h2>${S.materials.length?`<div class="tw"><table>
+    <tr><th>Nombre</th><th>Unidad</th><th class="n">Costo</th><th class="n">Costo por unidad menor</th><th class="n">Existencia</th><th></th></tr>
+    ${S.materials.map(m=>{const sm=fam(m.unit)==='masa'?'g':fam(m.unit)==='volumen'?'ml':'und';
+      return `<tr><td>${esc(m.name)}</td><td>${UNITS[m.unit].n}</td><td class="n">${money(m.cost)}</td>
+      <td class="n mut">${money(baseCost(m))} / ${UNITS[sm].n}</td>
+      <td class="n">${fmt(num(m.stock))} ${UNITS[m.stockUnit||m.unit].n}</td>
+      <td class="n"><button class="b g" onclick="editMat('${m.id}')">Editar</button><button class="x" title="Eliminar" onclick="delMat('${m.id}')">✕</button></td></tr>`}).join('')}
+  </table></div>`:'<div class="empty">Aún no has registrado materias primas.</div>'}</div>`;
+  $('#fm').onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);
+    S.materials.push({id:uid(),name:f.get('name').trim(),unit:f.get('unit'),cost:num(f.get('cost')),stock:num(f.get('stock')),stockUnit:f.get('unit')});
+    save();render();};
+}
+function editMat(id){
+  const m=mat(id),d=$('#dlg');
+  d.innerHTML=`<h2>Editar materia prima</h2><form id="fe">
+    <div class="row"><div><label>Nombre</label><input name="name" value="${esc(m.name)}" required></div>
+    <div><label>Unidad de compra</label><select name="unit" ${S.products.some(p=>p.recipe.some(l=>l.matId===id))?'disabled title="En uso en fórmulas"':''}>${unitOptsGrouped(m.unit)}</select></div>
+    <div><label>Costo por unidad ($)</label><input name="cost" type="number" step="any" min="0" value="${m.cost}" required></div></div>
+    <div class="row"><div><label>Existencia</label><input name="stock" type="number" step="any" min="0" value="${num(m.stock)}"></div>
+    <div><label>Unidad de existencia</label><select name="stockUnit">${unitOpts(m.stockUnit||m.unit,fam(m.unit))}</select></div></div>
+    <div class="bar"><button class="b">Guardar</button><button type="button" class="b g" onclick="$('#dlg').close()">Cancelar</button></div></form>`;
+  d.showModal();
+  $('#fe').onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);
+    m.name=f.get('name').trim();m.cost=num(f.get('cost'));m.stock=num(f.get('stock'));
+    if(f.get('unit'))m.unit=f.get('unit');
+    m.stockUnit=f.get('stockUnit');if(fam(m.stockUnit)!==fam(m.unit))m.stockUnit=m.unit;
+    save();d.close();render();};
+}
+function delMat(id){
+  const used=S.products.filter(p=>p.recipe.some(l=>l.matId===id)).map(p=>p.name);
+  if(used.length&&!confirm('Se usa en: '+used.join(', ')+'.\n¿Eliminar y quitarla de esas fórmulas?'))return;
+  if(!used.length&&!confirm('¿Eliminar materia prima?'))return;
+  S.materials=S.materials.filter(m=>m.id!==id);
+  S.products.forEach(p=>p.recipe=p.recipe.filter(l=>l.matId!==id));
+  save();render();
+}
+
+// ---------- Productos ----------
+function viewProd(){
+  $('#main').innerHTML=`<div class="card"><div class="bar"><h2 style="margin:0;flex:1">Productos</h2>
+    <button class="b" onclick="editProd()">+ Nuevo producto</button></div>
+    ${S.products.length?`<div class="tw"><table><tr><th>Producto</th><th class="n">Costo mat.</th><th class="n">Otros costos</th><th class="n">Costo total</th><th class="n">Precio venta</th><th class="n">Ganancia</th><th></th></tr>
+    ${S.products.map(p=>{const c=productCosts(p),g=num(p.price)-c.total;
+      return `<tr><td><b>${esc(p.name)}</b><br><span class="mut" style="font-size:12px">${p.recipe.length} ingredientes</span></td>
+      <td class="n">${money(c.mats)}</td><td class="n">${money(c.other)}</td><td class="n">${money(c.total)}</td>
+      <td class="n">${money(num(p.price))}</td>
+      <td class="n ${g>=0?'ok':'bad'}">${money(g)}${num(p.price)?` <small>(${fmt(g/num(p.price)*100,1)}%)</small>`:''}</td>
+      <td class="n"><button class="b g" onclick="viewIns('${p.id}')">Instructivo</button> <button class="b g" onclick="editProd('${p.id}')">Editar</button><button class="x" onclick="delProd('${p.id}')">✕</button></td></tr>`}).join('')}
+    </table></div>`:'<div class="empty">Aún no has creado productos.</div>'}</div>`;
+}
+function delProd(id){if(confirm('¿Eliminar producto?')){S.products=S.products.filter(p=>p.id!==id);save();render();}}
+function viewIns(id){
+  const p=S.products.find(x=>x.id===id),d=$('#dlg');
+  d.innerHTML=`<h2>${esc(p.name)} — Instructivo</h2>
+    <h3>Fórmula (por unidad)</h3>${p.recipe.length?`<ul>${p.recipe.map(l=>`<li>${fmt(l.qty)} ${UNITS[l.unit].n} de ${esc(mat(l.matId)?.name)}</li>`).join('')}</ul>`:'<p class="mut">Sin ingredientes.</p>'}
+    <h3>Preparación</h3><pre class="ins">${esc(p.instructions)||'Sin instructivo.'}</pre>
+    <div class="bar" style="margin-top:14px"><button class="b g" onclick="$('#dlg').close()">Cerrar</button></div>`;
+  d.showModal();
+}
+
+let draft=null;
+function editProd(id){
+  const p=id?S.products.find(x=>x.id===id):null;
+  draft=p?JSON.parse(JSON.stringify(p)):{id:uid(),name:'',price:0,instructions:'',recipe:[],others:[]};
+  draft._new=!p;
+  const d=$('#dlg');
+  d.innerHTML=`<h2>${p?'Editar':'Nuevo'} producto</h2><form id="fp">
+    <div class="row"><div><label>Nombre del producto</label><input id="pn" value="${esc(draft.name)}" required></div>
+    <div><label>Precio de venta ($)</label><input id="pp" type="number" step="any" min="0" value="${draft.price}"></div></div>
+    <h3>Fórmula — materias primas por 1 unidad producida</h3><div id="rec"></div>
+    <button type="button" class="b g" onclick="addLine()">+ Ingrediente</button>
+    <h3>Otros costos por unidad (empaque, mano de obra, energía…)</h3><div id="oth"></div>
+    <button type="button" class="b g" onclick="addOther()">+ Otro costo</button>
+    <h3>Instructivo</h3><textarea id="pi" placeholder="Pasos de elaboración…">${esc(draft.instructions)}</textarea>
+    <div id="sum" class="kpis"></div>
+    <div class="bar"><button class="b">Guardar</button><button type="button" class="b g" onclick="$('#dlg').close()">Cancelar</button></div></form>`;
+  d.showModal();
+  drawRec();drawOth();
+  $('#pp').oninput=sumUp;
+  $('#fp').onsubmit=e=>{e.preventDefault();
+    draft.name=$('#pn').value.trim();draft.price=num($('#pp').value);draft.instructions=$('#pi').value;
+    draft.recipe=draft.recipe.filter(l=>l.matId&&l.qty>0);
+    draft.others=draft.others.filter(o=>o.desc||o.amount);
+    const isNew=draft._new;delete draft._new;
+    if(isNew)S.products.push(draft);else S.products[S.products.findIndex(x=>x.id===draft.id)]=draft;
+    save();d.close();render();};
+}
+function drawRec(){
+  $('#rec').innerHTML=S.materials.length?draft.recipe.map((l,i)=>{
+    const m=mat(l.matId);
+    return `<div class="row" style="grid-template-columns:2fr 1fr 1fr 1fr auto">
+    <div><label>Materia prima</label><select onchange="setMat(${i},this.value)"><option value="">— elegir —</option>${S.materials.map(x=>`<option value="${x.id}"${x.id===l.matId?' selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+    <div><label>Cantidad</label><input type="number" step="any" min="0" value="${l.qty||''}" oninput="draft.recipe[${i}].qty=num(this.value);sumUp()"></div>
+    <div><label>Unidad</label><select onchange="draft.recipe[${i}].unit=this.value;sumUp()">${m?unitOpts(l.unit,fam(m.unit)):''}</select></div>
+    <div class="n" id="lc${i}" style="padding-bottom:8px">${money(lineCost(l))}</div>
+    <button type="button" class="x" onclick="draft.recipe.splice(${i},1);drawRec()">✕</button></div>`}).join('')
+    :'<p class="mut">Primero registra materias primas.</p>';
+  sumUp();
+}
+function setMat(i,id){const l=draft.recipe[i];l.matId=id;l.unit=id?mat(id).unit:'g';drawRec();}
+function addLine(){draft.recipe.push({matId:'',qty:0,unit:'g'});drawRec();}
+function drawOth(){
+  $('#oth').innerHTML=draft.others.map((o,i)=>`<div class="row" style="grid-template-columns:2fr 1fr auto">
+    <div><label>Concepto</label><input value="${esc(o.desc)}" oninput="draft.others[${i}].desc=this.value"></div>
+    <div><label>Monto por unidad ($)</label><input type="number" step="any" min="0" value="${o.amount||''}" oninput="draft.others[${i}].amount=num(this.value);sumUp()"></div>
+    <button type="button" class="x" onclick="draft.others.splice(${i},1);drawOth();sumUp()">✕</button></div>`).join('');
+}
+function addOther(){draft.others.push({desc:'',amount:0});drawOth();}
+function sumUp(){
+  draft.recipe.forEach((l,i)=>{const e=$('#lc'+i);if(e)e.textContent=money(lineCost(l));});
+  const c=productCosts(draft),pr=num($('#pp')?.value),g=pr-c.total;
+  $('#sum').innerHTML=`<div class="kpi"><small>Materias primas</small><b>${money(c.mats)}</b></div>
+    <div class="kpi"><small>Otros costos</small><b>${money(c.other)}</b></div>
+    <div class="kpi"><small>Costo total/unidad</small><b>${money(c.total)}</b></div>
+    <div class="kpi"><small>Ganancia/unidad</small><b class="${g>=0?'ok':'bad'}">${money(g)}</b></div>`;
+}
+
+// ---------- ¿Cuánto cuesta? ----------
+function prodSelect(id,sel){return `<select id="${id}">${S.products.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc(p.name)}</option>`).join('')}</select>`;}
+let costSel='',costQty=10;
+function viewCost(){
+  if(!S.products.length){$('#main').innerHTML='<div class="card empty">Crea un producto primero.</div>';return;}
+  if(!S.products.some(p=>p.id===costSel))costSel=S.products[0].id;
+  $('#main').innerHTML=`<div class="card"><h2>Costo de producción</h2><div class="row">
+    <div><label>Producto</label>${prodSelect('cs',costSel)}</div>
+    <div><label>Cantidad a producir</label><input id="cq" type="number" min="0" step="any" value="${costQty}"></div></div>
+    <div id="cr"></div></div>`;
+  $('#cs').onchange=e=>{costSel=e.target.value;calcCost();};
+  $('#cq').oninput=e=>{costQty=num(e.target.value);calcCost();};
+  calcCost();
+}
+function calcCost(){
+  const p=S.products.find(x=>x.id===costSel),q=costQty,c=productCosts(p);
+  const rows=p.recipe.map(l=>{const m=mat(l.matId),b=l.qty*UNITS[l.unit].k*q;
+    const inBuy=b/UNITS[m.unit].k,have=stockBase(m);
+    return `<tr><td>${esc(m.name)}</td><td class="n">${fmt(l.qty*q)} ${UNITS[l.unit].n}</td>
+    <td class="n mut">${fmt(inBuy)} ${UNITS[m.unit].n}</td><td class="n">${money(lineCost(l)*q)}</td>
+    <td class="n ${have>=b-1e-9?'ok':'bad'}">${have>=b-1e-9?'Suficiente':'Faltan '+fmt((b-have)/UNITS[m.unit].k)+' '+UNITS[m.unit].n}</td></tr>`}).join('');
+  const oth=p.others.map(o=>`<tr><td>${esc(o.desc)||'Otro costo'}</td><td class="n mut" colspan="2">${money(num(o.amount))} × ${fmt(q)}</td><td class="n">${money(num(o.amount)*q)}</td><td></td></tr>`).join('');
+  const tot=c.total*q,rev=num(p.price)*q;
+  $('#cr').innerHTML=`<div class="kpis">
+    <div class="kpi"><small>Costo total</small><b class="big">${money(tot)}</b></div>
+    <div class="kpi"><small>Costo por unidad</small><b>${money(c.total)}</b></div>
+    <div class="kpi"><small>Ingreso por ventas</small><b>${money(rev)}</b></div>
+    <div class="kpi"><small>Ganancia</small><b class="${rev-tot>=0?'ok':'bad'}">${money(rev-tot)}</b></div></div>
+    <div class="tw"><table><tr><th>Concepto</th><th class="n">Necesario</th><th class="n">En unidad de compra</th><th class="n">Costo</th><th class="n">Existencia</th></tr>
+    ${rows}${oth}<tr><td><b>Total</b></td><td colspan="2"></td><td class="n"><b>${money(tot)}</b></td><td></td></tr></table></div>`;
+}
+
+// ---------- ¿Cuánto puedo producir? ----------
+let capSel='';
+function viewCap(){
+  if(!S.products.length){$('#main').innerHTML='<div class="card empty">Crea un producto primero.</div>';return;}
+  if(!S.products.some(p=>p.id===capSel))capSel=S.products[0].id;
+  $('#main').innerHTML=`<div class="card"><h2>Mis existencias</h2>
+    <p class="mut" style="margin-top:0;font-size:13px">Escribe cuánto tienes de cada materia prima; el resultado se actualiza al instante.</p>
+    <div class="row">${S.materials.map(m=>`<div><label>${esc(m.name)}</label>
+      <div style="display:flex;gap:4px"><input type="number" step="any" min="0" value="${num(m.stock)}" oninput="setStock('${m.id}',this.value)">
+      <select style="width:auto" onchange="setStockUnit('${m.id}',this.value)">${unitOpts(m.stockUnit||m.unit,fam(m.unit))}</select></div></div>`).join('')}</div></div>
+    <div class="card"><h2>Producción posible</h2><div class="row"><div><label>Producto</label>${prodSelect('ps',capSel)}</div></div>
+    <div id="cp"></div></div>
+    <div class="card"><h2>Todos los productos</h2><div id="ca"></div></div>`;
+  $('#ps').onchange=e=>{capSel=e.target.value;calcCap();};
+  calcCap();
+}
+function setStock(id,v){mat(id).stock=num(v);save();calcCap();}
+function setStockUnit(id,u){mat(id).stockUnit=u;save();calcCap();}
+// Devuelve unidades posibles y detalle
+function capacity(p){
+  let best=Infinity,lim=null;
+  const det=p.recipe.map(l=>{const m=mat(l.matId),need=l.qty*UNITS[l.unit].k,have=stockBase(m);
+    const n=need>0?have/need:Infinity;
+    if(n<best){best=n;lim=m;}
+    return {m,l,need,have,n};});
+  if(!det.length)best=0;
+  return {max:Math.floor(best+1e-9),lim,det};
+}
+function calcCap(){
+  const p=S.products.find(x=>x.id===capSel),r=capacity(p),c=productCosts(p);
+  $('#cp').innerHTML=!p.recipe.length?'<div class="empty">Este producto no tiene fórmula.</div>':`
+    <div class="kpis"><div class="kpi"><small>Puedes producir</small><b class="big">${fmt(r.max,0)} und</b></div>
+    <div class="kpi"><small>Limita</small><b class="warn">${esc(r.lim?.name||'—')}</b></div>
+    <div class="kpi"><small>Costo de esa producción</small><b>${money(c.total*r.max)}</b></div>
+    <div class="kpi"><small>Venta potencial</small><b>${money(num(p.price)*r.max)}</b></div></div>
+    <div class="tw"><table><tr><th>Materia prima</th><th class="n">Por unidad</th><th class="n">Tienes</th><th class="n">Alcanza para</th><th class="n">Sobrante tras producir</th></tr>
+    ${r.det.map(x=>{const u=x.l.unit,bu=x.m.unit,left=x.have-x.need*r.max;
+      return `<tr><td>${esc(x.m.name)}${x.m===r.lim?' ⚠️':''}</td><td class="n">${fmt(x.l.qty)} ${UNITS[u].n}</td>
+      <td class="n">${fmt(x.have/UNITS[bu].k)} ${UNITS[bu].n}</td><td class="n">${fmt(Math.floor(x.n+1e-9),0)} und</td>
+      <td class="n">${fmt(left/UNITS[bu].k)} ${UNITS[bu].n}</td></tr>`}).join('')}</table></div>`;
+  $('#ca').innerHTML=`<div class="tw"><table><tr><th>Producto</th><th class="n">Puedes producir</th><th>Limita</th></tr>
+    ${S.products.map(q=>{const x=capacity(q);return `<tr><td>${esc(q.name)}</td><td class="n"><b>${fmt(x.max,0)}</b></td><td class="mut">${esc(x.lim?.name||'—')}</td></tr>`}).join('')}</table></div>
+    <p class="mut" style="font-size:12px">Cada fila asume que usas todas las existencias solo para ese producto.</p>`;
+}
+
+// ---------- Respaldo ----------
+function viewData(){
+  $('#main').innerHTML=`<div class="card"><h2>Respaldo de datos</h2>
+    <p class="mut">Tus datos se guardan en este navegador. Descarga un respaldo para moverlos o protegerlos.</p>
+    <div class="bar"><button class="b" onclick="exportData()">Descargar respaldo</button>
+    <label class="b g" style="display:inline-block;cursor:pointer;margin:0;color:var(--tx)">Importar respaldo<input type="file" accept=".json" hidden onchange="importData(this.files[0])"></label>
+    <button class="b g" style="color:var(--bad)" onclick="if(confirm('¿Borrar TODOS los datos?')){S={materials:[],products:[]};save();render();}">Borrar todo</button></div></div>`;
+}
+function exportData(){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));
+  a.download='mi-produccion.json';a.click();
+}
+function importData(f){
+  if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.materials)||!Array.isArray(d.products))throw 0;
+    S=d;save();render();alert('Datos importados');}catch(e){alert('Archivo inválido');}};
+  r.readAsText(f);
+}
+
+render();
+</script>
+</body>
+</html>
