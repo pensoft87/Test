@@ -50,95 +50,77 @@ def asset(x0, y0, x1, y1):
 def place(im, x, y):
     out.alpha_composite(im, (int(round(x)), int(round(y))))
 
-# Spanish syllable breaks allowed when justifying (word -> hyphenation points)
-HYPH = {w.replace('-', ''): w for w in (
-    'acon-di-cio-nar me-jo-ran-do apa-rien-cia sen-sa-ción re-se-que-dad con-tri-bu-ye '
-    'nu-tri-ti-va di-se-ña-da sua-vi-zar apor-tar ca-be-llo ma-ne-jo fa-ci-li-ta re-du-cir '
-    'jo-jo-ba agua-ca-te vi-ta-mi-na ri-ci-no fra-gan-cia na-tu-ral '
-    'apli-car pro-ce-de uti-li-zar pro-duc-tos ha-bi-tual de-fi-nir ne-ce-si-dad '
-    'dis-tri-bu-yen-do uni-for-me-men-te me-dios pun-tas pro-ce-der pei-na-do desea-do').split()}
+# Justification without hyphens: the line breaks are chosen so every line is as evenly full as
+# possible, and each line's leftover space is shared between the word gaps and a very slight
+# change in letter spacing (at most +2% / -1.5% of the type size), so no gap gets wide.
+TRACK_MAX, TRACK_MIN, SPACE_SHRINK = 0.02, -0.015, 0.2
 
-def pieces(text):
-    """Split into breakable pieces: (text, joiner) where joiner is ' ' or '-' (syllable break)."""
-    out = []
-    for w in text.split():
-        core = w.rstrip('.,;:')
-        tail = w[len(core):]
-        parts = HYPH.get(core.lower(), core).split('-')
-        # no fragments shorter than three letters at either end of a broken line
-        while len(parts) > 1 and len(parts[0]) < 3:
-            parts[:2] = [parts[0] + parts[1]]
-        while len(parts) > 1 and len(parts[-1]) < 3:
-            parts[-2:] = [parts[-2] + parts[-1]]
-        if core[:1].isupper() and len(parts) > 1:
-            parts[0] = parts[0].capitalize()
-        parts[-1] += tail
-        for k, part in enumerate(parts):
-            out.append([part, '-' if k < len(parts) - 1 else ' '])
-    return out
+def fit(words, f, width, size):
+    """How a run of words sets on one line: (letter spacing, space width, badness) or None."""
+    nat = f.getlength(' '.join(words))
+    sp = f.getlength(' ')
+    gaps = len(words) - 1
+    chars = sum(len(w) for w in words) - 1 + gaps
+    slack = width - nat
+    if slack >= 0:
+        t = min(slack / max(chars, 1), TRACK_MAX * size)
+    else:
+        t = max(slack / max(chars, 1), TRACK_MIN * size)
+    rest = slack - t * chars
+    if gaps == 0:
+        return (t, sp, (rest / sp) ** 2 * 4) if rest >= 0 else None
+    extra = rest / gaps
+    if extra < -SPACE_SHRINK * sp:
+        return None
+    return t, sp + extra, gaps * (extra / sp) ** 2 + chars * (t / size * 10) ** 2
 
-def line_text(ps):
-    t = ''
-    for k, (part, j) in enumerate(ps):
-        t += part
-        if k < len(ps) - 1 and j == ' ':
-            t += ' '
-    if ps[-1][1] == '-':
-        t += '-'
-    return t
-
-def wrap(text, f, width):
-    """Break into lines that fit, choosing breaks (between words or at syllables) that keep
-    the lines evenly full, so the justified paragraph has no wide gaps."""
-    ps = pieces(text)
-    n = len(ps)
+def wrap(text, f, width, size=BODY_SIZE):
+    words = text.split()
+    n = len(words)
     best = [0.0] + [float('inf')] * n
     prev = [0] * (n + 1)
     for j in range(1, n + 1):
         for i in range(j, 0, -1):
-            if i > 1 and ps[i - 2][1] == '-' and i - 1 != 0:
-                pass
-            # a line can only start after a break point (always true: every piece ends at one)
-            length = f.getlength(line_text(ps[i - 1:j]))
-            if length > width and i < j:
-                break
-            if length > width:
-                continue
-            if j == n:
-                cost = 0 if length > width * 0.3 else (width * 0.3 - length) ** 2
+            ws = words[i - 1:j]
+            if j == n:                                   # last line: natural spacing, flush left
+                ln = f.getlength(' '.join(ws))
+                # ...and never a lone short word on it
+                cost = None if ln > width else (0.0 if ln >= width * 0.35 else 50.0)
             else:
-                spaces = max(line_text(ps[i - 1:j]).count(' '), 1)
-                cost = ((width - length) / spaces) ** 2 * spaces
-                if ps[j - 1][1] == '-':
-                    cost += (0.04 * width) ** 2          # mild penalty per hyphen
+                r = fit(ws, f, width, size)
+                cost = None if r is None else r[2]
+            if cost is None:
+                if f.getlength(' '.join(ws)) > width * 1.05:
+                    break
+                continue
             if best[i - 1] + cost < best[j]:
                 best[j], prev[j] = best[i - 1] + cost, i - 1
     lines, j = [], n
     while j > 0:
-        lines.append(line_text(ps[prev[j]:j])); j = prev[j]
+        lines.append(words[prev[j]:j]); j = prev[j]
     return lines[::-1]
 
 def text_block(text, width, size=BODY_SIZE, lh=BODY_LH, color=INK, weight=600, justify=True):
-    """Render a paragraph (justified, last line flush left); the block's top is the cap height."""
+    """Render a justified paragraph (last line flush left); the block's top is the cap height."""
     S = 4
+    f1 = font(FONT, size, weight)
     f = font(FONT, size * S, weight)
-    lines = wrap(text, font(FONT, size, weight), width)
+    lines = wrap(text, f1, width, size)
     asc = f.getbbox('H')[1]
     h = lh * len(lines) + size
     im = Image.new('L', ((width + 20) * S, h * S), 0)
     d = ImageDraw.Draw(im)
-    for i, ln in enumerate(lines):
+    for i, ws in enumerate(lines):
         ty = i * lh * S - asc
-        words = ln.split()
-        if justify and i < len(lines) - 1 and len(words) > 1:
-            ink = sum(f.getlength(w) for w in words)
-            gap = (width * S - ink) / (len(words) - 1)
-            x = 0.0
-            for w in words:
-                d.text((x, ty), w, font=f, fill=255)
-                x += f.getlength(w) + gap
+        if justify and i < len(lines) - 1:
+            t, spw, _ = fit(ws, f1, width, size)
         else:
-            d.text((0, ty), ln, font=f, fill=255)
+            t, spw = 0.0, f1.getlength(' ')
+        x = 0.0
+        for w in ws:
+            for k, ch in enumerate(w):              # keep kerning: position by prefix width
+                d.text((x + f.getlength(w[:k]) + k * t * S, ty), ch, font=f, fill=255)
+            x += f.getlength(w) + len(w) * t * S + spw * S
     im = im.resize((width + 20, h), Image.LANCZOS)
     rgba = Image.new('RGBA', im.size, color + (0,))
     rgba.putalpha(im)
@@ -184,7 +166,7 @@ def round_icon(cx, cy, r):
 
 # ------------------------------------------------------------------ left panel
 LX = 56                                    # left edge of the column
-L_TEXT_W = 442
+L_TEXT_W = 434
 pp, _ = asset(315, 86, 548, 141)           # "Propiedades" pill
 pi, _ = asset(312, 246, 522, 290)          # "Ingredientes" pill
 formula, _ = asset(305, 342, 540, 420)
@@ -216,7 +198,7 @@ y = max(fy + cal.size[1], by + brush.size[1])
 print('left column bottom', y)
 
 # ------------------------------------------------------------------ right panel
-RX = 1090                                  # left edge of the icons
+RX = 1086                                  # left edge of the icons
 mu, _ = asset(1054, 86, 1284, 143)         # "Modo de uso" pill
 uso, _ = asset(1068, 346, 1300, 409)
 rule_r, _ = asset(1080, 409, 1290, 426)
@@ -225,11 +207,13 @@ tt_pill, _ = asset(1182, 425, 1295, 470)
 ig_qr, _ = asset(1068, 470, 1168, 560)
 tt_qr, _ = asset(1196, 470, 1288, 560)
 hp, _ = asset(1010, 563, 1302, 658)
+ICON_SCALE = 0.92                          # a touch smaller to give the copy room
 icon1 = round_icon(1089.17, 193.58, 39.6)
 icon2 = round_icon(1094.64, 292.44, 38.2)
+icon1, icon2 = (im.resize((round(im.width * ICON_SCALE), round(im.height * ICON_SCALE)), Image.LANCZOS) for im in (icon1, icon2))
 p1, p2 = pill(COPY['modo1_title']), pill(COPY['modo2_title'])
-TX = RX + 88
-R_RIGHT = 1552
+TX = RX + 80
+R_RIGHT = 1560
 R_TEXT_W = R_RIGHT - TX
 t1, n1 = text_block(COPY['modo1'], R_TEXT_W)
 t2, n2 = text_block(COPY['modo2'], R_TEXT_W)
