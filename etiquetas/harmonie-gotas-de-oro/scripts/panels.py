@@ -19,10 +19,10 @@ layer = Image.open(base + '-layer.png').convert('RGBA')
 src = np.asarray(Image.open(src_path).convert('RGB')).astype(np.float64)
 W, H = plate.size
 
-INK = (62, 44, 94)            # body copy colour sampled from the label
+INK = (78, 46, 124)           # lilac body copy, as the label's own text reads in print
 PILL = (88, 16, 112)          # small pill purple
 PILL_TXT = (246, 226, 252)
-BODY_SIZE, BODY_LH = 18, 22
+BODY_SIZE, BODY_LH = 22, 27
 FONT = 'NunitoSans.ttf'
 
 COPY = {
@@ -50,34 +50,102 @@ def asset(x0, y0, x1, y1):
 def place(im, x, y):
     out.alpha_composite(im, (int(round(x)), int(round(y))))
 
-def wrap(text, f, width):
-    lines, cur = [], ''
-    for w in text.split():
-        cand = (cur + ' ' + w).strip()
-        if f.getlength(cand) <= width or not cur:
-            cur = cand
-        else:
-            lines.append(cur); cur = w
-    lines.append(cur)
-    return lines
+# Spanish syllable breaks allowed when justifying (word -> hyphenation points)
+HYPH = {w.replace('-', ''): w for w in (
+    'acon-di-cio-nar me-jo-ran-do apa-rien-cia sen-sa-ción re-se-que-dad con-tri-bu-ye '
+    'nu-tri-ti-va di-se-ña-da sua-vi-zar apor-tar ca-be-llo ma-ne-jo fa-ci-li-ta re-du-cir '
+    'jo-jo-ba agua-ca-te vi-ta-mi-na ri-ci-no fra-gan-cia na-tu-ral '
+    'apli-car pro-ce-de uti-li-zar pro-duc-tos ha-bi-tual de-fi-nir ne-ce-si-dad '
+    'dis-tri-bu-yen-do uni-for-me-men-te me-dios pun-tas pro-ce-der pei-na-do desea-do').split()}
 
-def text_block(text, width, size=BODY_SIZE, lh=BODY_LH, color=INK, weight=600):
-    """Render a left-aligned paragraph; the block's top is the top of the cap height."""
-    f = font(FONT, size * 4, weight)
+def pieces(text):
+    """Split into breakable pieces: (text, joiner) where joiner is ' ' or '-' (syllable break)."""
+    out = []
+    for w in text.split():
+        core = w.rstrip('.,;:')
+        tail = w[len(core):]
+        parts = HYPH.get(core.lower(), core).split('-')
+        # no fragments shorter than three letters at either end of a broken line
+        while len(parts) > 1 and len(parts[0]) < 3:
+            parts[:2] = [parts[0] + parts[1]]
+        while len(parts) > 1 and len(parts[-1]) < 3:
+            parts[-2:] = [parts[-2] + parts[-1]]
+        if core[:1].isupper() and len(parts) > 1:
+            parts[0] = parts[0].capitalize()
+        parts[-1] += tail
+        for k, part in enumerate(parts):
+            out.append([part, '-' if k < len(parts) - 1 else ' '])
+    return out
+
+def line_text(ps):
+    t = ''
+    for k, (part, j) in enumerate(ps):
+        t += part
+        if k < len(ps) - 1 and j == ' ':
+            t += ' '
+    if ps[-1][1] == '-':
+        t += '-'
+    return t
+
+def wrap(text, f, width):
+    """Break into lines that fit, choosing breaks (between words or at syllables) that keep
+    the lines evenly full, so the justified paragraph has no wide gaps."""
+    ps = pieces(text)
+    n = len(ps)
+    best = [0.0] + [float('inf')] * n
+    prev = [0] * (n + 1)
+    for j in range(1, n + 1):
+        for i in range(j, 0, -1):
+            if i > 1 and ps[i - 2][1] == '-' and i - 1 != 0:
+                pass
+            # a line can only start after a break point (always true: every piece ends at one)
+            length = f.getlength(line_text(ps[i - 1:j]))
+            if length > width and i < j:
+                break
+            if length > width:
+                continue
+            if j == n:
+                cost = 0 if length > width * 0.3 else (width * 0.3 - length) ** 2
+            else:
+                spaces = max(line_text(ps[i - 1:j]).count(' '), 1)
+                cost = ((width - length) / spaces) ** 2 * spaces
+                if ps[j - 1][1] == '-':
+                    cost += (0.04 * width) ** 2          # mild penalty per hyphen
+            if best[i - 1] + cost < best[j]:
+                best[j], prev[j] = best[i - 1] + cost, i - 1
+    lines, j = [], n
+    while j > 0:
+        lines.append(line_text(ps[prev[j]:j])); j = prev[j]
+    return lines[::-1]
+
+def text_block(text, width, size=BODY_SIZE, lh=BODY_LH, color=INK, weight=600, justify=True):
+    """Render a paragraph (justified, last line flush left); the block's top is the cap height."""
+    S = 4
+    f = font(FONT, size * S, weight)
     lines = wrap(text, font(FONT, size, weight), width)
     asc = f.getbbox('H')[1]
     h = lh * len(lines) + size
-    im = Image.new('L', ((width + 20) * 4, h * 4), 0)
+    im = Image.new('L', ((width + 20) * S, h * S), 0)
     d = ImageDraw.Draw(im)
     for i, ln in enumerate(lines):
-        d.text((0, i * lh * 4 - asc), ln, font=f, fill=255)
+        ty = i * lh * S - asc
+        words = ln.split()
+        if justify and i < len(lines) - 1 and len(words) > 1:
+            ink = sum(f.getlength(w) for w in words)
+            gap = (width * S - ink) / (len(words) - 1)
+            x = 0.0
+            for w in words:
+                d.text((x, ty), w, font=f, fill=255)
+                x += f.getlength(w) + gap
+        else:
+            d.text((0, ty), ln, font=f, fill=255)
     im = im.resize((width + 20, h), Image.LANCZOS)
     rgba = Image.new('RGBA', im.size, color + (0,))
     rgba.putalpha(im)
     bb = im.getbbox()
     return rgba.crop((0, 0, bb[2], bb[3])), len(lines)
 
-def pill(label, size=17, pad=12, height=26):
+def pill(label, size=18, pad=13, height=28):
     """Small purple pill with white label, drawn like the label's own 'Modo 1' pill."""
     f = font(FONT, size * 4, 800)
     tw = f.getlength(label) / 4
@@ -115,8 +183,8 @@ def round_icon(cx, cy, r):
     return Image.fromarray(np.dstack([rgb, a * 255]).astype(np.uint8), 'RGBA')
 
 # ------------------------------------------------------------------ left panel
-LX = 100                                   # left edge of the column
-L_TEXT_W = 395
+LX = 56                                    # left edge of the column
+L_TEXT_W = 442
 pp, _ = asset(315, 86, 548, 141)           # "Propiedades" pill
 pi, _ = asset(312, 246, 522, 290)          # "Ingredientes" pill
 formula, _ = asset(305, 342, 540, 420)
@@ -148,17 +216,21 @@ y = max(fy + cal.size[1], by + brush.size[1])
 print('left column bottom', y)
 
 # ------------------------------------------------------------------ right panel
-RX = 1100                                  # left edge of the icons
+RX = 1090                                  # left edge of the icons
 mu, _ = asset(1054, 86, 1284, 143)         # "Modo de uso" pill
 uso, _ = asset(1068, 346, 1300, 409)
 rule_r, _ = asset(1080, 409, 1290, 426)
-social, _ = asset(1052, 425, 1300, 563)
+ig_pill, _ = asset(1055, 425, 1182, 470)
+tt_pill, _ = asset(1182, 425, 1295, 470)
+ig_qr, _ = asset(1068, 470, 1168, 560)
+tt_qr, _ = asset(1196, 470, 1288, 560)
 hp, _ = asset(1010, 563, 1302, 658)
 icon1 = round_icon(1089.17, 193.58, 39.6)
 icon2 = round_icon(1094.64, 292.44, 38.2)
 p1, p2 = pill(COPY['modo1_title']), pill(COPY['modo2_title'])
 TX = RX + 88
-R_TEXT_W = 1520 - TX
+R_RIGHT = 1552
+R_TEXT_W = R_RIGHT - TX
 t1, n1 = text_block(COPY['modo1'], R_TEXT_W)
 t2, n2 = text_block(COPY['modo2'], R_TEXT_W)
 
@@ -171,10 +243,18 @@ for pl, tx, icon, gap in ((p1, t1, icon1, 10), (p2, t2, icon2, 10)):
     place(tx, TX, y + pl.size[1] + 7)
     place(icon, RX, y + (gh - icon.size[1]) / 2)
     y += max(gh, icon.size[1])
-y += 10; place(uso, RX + 24, y); y += uso.size[1]
-y += 4; place(rule_r, RX + 30, y); y += rule_r.size[1]
-y += 0; place(social, RX + 6, y); y += social.size[1]
-y += 0; place(hp, RX - 34, y); y += hp.size[1]
+y += 8; place(uso, RX + 24, y); y += uso.size[1]
+y += 2; place(rule_r, RX + 30, y); y += rule_r.size[1]
+# social: each QR with its handle pill beside it, the two pairs spread over the column
+y += 6
+qh = max(ig_qr.size[1], tt_qr.size[1])
+place(ig_qr, RX + 6, y)
+place(ig_pill, RX + 6 + ig_qr.size[0] + 10, y + (qh - ig_pill.size[1]) / 2)
+x2 = R_RIGHT - tt_pill.size[0]
+place(tt_pill, x2, y + (qh - tt_pill.size[1]) / 2)
+place(tt_qr, x2 - 10 - tt_qr.size[0], y)
+y += qh
+y += 4; place(hp, (RX + 6 + R_RIGHT) / 2 - hp.size[0] / 2, y); y += hp.size[1]
 print('right column bottom', y)
 
 out.convert('RGB').save(dst)
