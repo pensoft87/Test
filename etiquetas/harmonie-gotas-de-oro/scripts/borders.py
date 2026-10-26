@@ -4,7 +4,7 @@ import sys, numpy as np
 from PIL import Image
 
 src, dst = sys.argv[1], sys.argv[2]
-INSET, THICK = 12, 6            # distance from the edge and thickness, in px (320 ppi)
+INSET, THICK = 0, 6             # flush with the edge; thickness in px (320 ppi)
 
 a = np.asarray(Image.open(src).convert('RGB')).astype(np.float64)
 H, W = a.shape[:2]
