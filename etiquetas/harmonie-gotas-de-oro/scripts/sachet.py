@@ -1,6 +1,6 @@
 """Sample-sachet label, 2.4 x 2.9 in at 400 ppi (960 x 1160 px), built from the main label's art.
 
-usage: sachet.py <plate.png> <layer.png> <out.png>
+usage: sachet.py <plate.png> <layer.png> <out.png>  (needs: pip install segno)
   plate.png -- empty full-bleed label from layout.py (oval with the fixed title, empty panels)
   layer.png -- original panel elements from layout.py (seals, "Harmonieproducts" stroke)
 """
@@ -10,6 +10,8 @@ from scipy import ndimage as ndi
 sys.path.insert(0, sys.path[0])
 from common import dilate, inpaint
 from fonts import font
+import segno
+import typeset
 
 plate_path, layer_path, dst = sys.argv[1:4]
 plate = np.asarray(Image.open(plate_path).convert('RGB')).astype(np.float64)
@@ -85,7 +87,7 @@ bed = ((xx - OCX) / 250.0) ** 2 + ((yy - 655) / 105.0) ** 2
 m = np.maximum(m, np.clip((1.0 - bed) / 0.45, 0, 1))
 m = np.clip(m, 0, 1)
 
-OSC = 0.92                                            # oval scale on the sachet
+OSC = 0.86                                            # oval scale on the sachet
 def scaled(arr, sc):
     im = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8) if arr.ndim == 3 else (arr * 255).astype(np.uint8))
     im = im.resize((round(im.width * sc), round(im.height * sc)), Image.LANCZOS)
@@ -174,22 +176,56 @@ seal(W - 150, 178, 66, 'MUESTRA', 'GRATIS')
 seal(150, 178, 66, '+ VITAMINA E', '6 ACEITES', 20, -12, small_first=False)
 
 # ---------------------------------------------------------------- copy under the oval
-y = OY + oval_s.shape[0] + 14
-h, _ = put_center(text_img('Acondiciona  •  Suaviza  •  Aporta brillo', 25, 800, PURPLE), y + 12)
-y += h + 14
-for line in ('Con aceites de argán, jojoba, coco, aguacate,', 'oliva y ricino + vitamina E'):
-    h, _ = put_center(text_img(line, 21, 600, INK), y + 10)
-    y += 27
-y += 6
-rgb, a = asset(305, 428, 560, 503, 1.0)       # Paraben / Silicone / Cruelty / Sulfate free
-paste(rgb, int(W / 2 - a.shape[1] / 2), y, a)
-y += a.shape[0]
-print('copy ends at', y, '; flower band starts at', H - BH)
+PROPIEDADES = ('Mezcla nutritiva diseñada para acondicionar, suavizar y aportar brillo, mejorando '
+               'la apariencia del cabello. Contribuye a reducir la sensación de resequedad y '
+               'facilita el manejo del cabello.')
+INGREDIENTES = ('Aceite de jojoba, aceite de argán, aceite de aguacate, vitamina E, aceite de oliva, '
+                'aceite de ricino, aceite de coco y fragancia natural.')
+INSTAGRAM = 'https://www.instagram.com/harmonieproducts'
+MX0, MX1 = 92, W - 92                                # text margins
 
-y += 2
-rgb, a = asset(1010, 563, 1302, 658, 0.80)    # "Harmonieproducts" stroke
-paste(rgb, int(W / 2 - a.shape[1] / 2), y, a)
-print('stroke ends at', y + a.shape[0])
+def put_block(blk, x, y):
+    arr = np.asarray(blk).astype(np.float64)
+    paste(arr[..., :3], int(round(x)), int(round(y)), arr[..., 3] / 255)
+    return arr.shape[0]
+
+y = OY + oval_s.shape[0] + 16
+blk, _ = typeset.text_block(PROPIEDADES, MX1 - MX0, 20, 25, INK)
+y += put_block(blk, MX0, y) + 22
+
+# two columns: Instagram QR (left) | ingredients + "free" seals (right)
+QM = 6                                               # module size: 6 px = 0.015 in
+qr = segno.make(INSTAGRAM, error='m')
+mods = np.array([list(r) for r in qr.matrix_iter(scale=1, border=2)], float)
+q = np.kron(mods, np.ones((QM, QM)))
+QS = q.shape[0]
+qrgb = np.ones((QS, QS, 3)) * (1 - q[..., None]) * 255 + q[..., None] * np.array([42., 10., 58.])
+# rounded white card behind the code so it keeps its quiet zone on the cream
+card = Image.new('L', ((QS + 8) * 4, (QS + 8) * 4), 0)
+ImageDraw.Draw(card).rounded_rectangle((0, 0, card.width - 1, card.height - 1), radius=12 * 4, fill=255)
+card = np.asarray(card.resize((QS + 8, QS + 8), Image.LANCZOS), float) / 255
+qx, qy = MX0 + 6, y
+paste(np.ones((QS + 8, QS + 8, 3)) * 255, qx - 4, qy - 4, card)
+paste(qrgb, qx, qy, np.ones((QS, QS)))
+q_bottom = qy + QS
+
+RX0 = qx + QS + 36
+hd_rgb, hd_a = text_img('Ingredientes', 19, 800, PURPLE)
+paste(hd_rgb, RX0, y + 2, hd_a)
+ry = y + 2 + hd_a.shape[0] + 9
+blk, _ = typeset.text_block(INGREDIENTES, MX1 - RX0, 18, 23, INK)
+ry += put_block(blk, RX0, ry) + 14
+rgb, a = asset(305, 428, 560, 503, 0.86)            # Paraben / Silicone / Cruelty / Sulfate free
+paste(rgb, RX0 - 4, ry, a)
+ry += a.shape[0]
+# Instagram call to action, its last line level with the foot of the QR
+c1_rgb, c1_a = text_img('Escanéame y síguenos en Instagram', 15, 600, INK)
+c2_rgb, c2_a = text_img('@harmonieproducts', 21, 800, PURPLE)
+c2y = q_bottom - c2_a.shape[0]
+c1y = c2y - 7 - c1_a.shape[0]
+paste(c1_rgb, RX0, c1y, c1_a)
+paste(c2_rgb, RX0, c2y, c2_a)
+print('seals end', ry, '| call to action starts', c1y, '| QR ends', q_bottom, '| flower band starts', H - BH)
 
 # ---------------------------------------------------------------- gold edge rules (as on the label)
 dark, light = np.array([190., 136., 46.]), np.array([238., 196., 108.])
