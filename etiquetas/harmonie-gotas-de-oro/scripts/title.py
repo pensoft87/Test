@@ -82,4 +82,19 @@ ns = np.clip(rotate(s * keep), 0, 1)
 out = P * (1 - ns[..., None]) * (1 - na[..., None]) + Wc * na[..., None]
 res = a.copy()
 res[banner] = out[banner]
+
+# where the old "p" descender crossed the banner's lower edge, rebuild that stretch of the edge
+# from the clean edge just to its left, following the arc
+XL, XR, Y0, Y1 = 832, 874, 430, 450
+ref = res[Y0 - 4:Y1 + 4, XL].copy()
+def edge_y(x):
+    return cy - np.sqrt(893.0 ** 2 - (x - cx) ** 2)
+for x in range(XL + 1, XR):
+    dy = edge_y(x) - edge_y(XL)
+    ys = np.arange(Y0, Y1) - dy - (Y0 - 4)
+    i0 = np.clip(np.floor(ys).astype(int), 0, len(ref) - 2)
+    t = (ys - np.floor(ys))[:, None]
+    col = ref[i0] * (1 - t) + ref[i0 + 1] * t
+    w = min(1.0, (x - XL) / 4.0, (XR - x) / 4.0)          # blend in/out at the ends
+    res[Y0:Y1, x] = res[Y0:Y1, x] * (1 - w) + col * w
 Image.fromarray(np.clip(res + 0.5, 0, 255).astype(np.uint8)).save(dst)
