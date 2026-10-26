@@ -178,3 +178,10 @@ for mask, dx in ((mL, -shift), (mR, shift)):
     out = out * (1 - al[..., None]) + f * al[..., None]
 
 Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8)).save(dst)
+
+# optional: export the empty extended background and the lifted blocks (original coordinates)
+if len(sys.argv) > 4:
+    base = sys.argv[4]
+    Image.fromarray(np.clip(plate + 0.5, 0, 255).astype(np.uint8)).save(base + '-plate.png')
+    rgba = np.dstack([np.clip(fg, 0, 255), alpha * 255]).astype(np.uint8)
+    Image.fromarray(rgba, 'RGBA').save(base + '-layer.png')
