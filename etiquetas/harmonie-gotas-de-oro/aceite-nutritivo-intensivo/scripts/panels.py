@@ -25,7 +25,8 @@ SC = H / layer.size[1]                       # model -> label scale (800 / 768)
 
 typeset.FONT = 'PTSerif-Regular.ttf'
 INK = (40, 22, 6)                            # the model's dark brown copy
-BODY_SIZE, BODY_LH = 20, 25
+BODY_SIZE, BODY_LH = 19, 24
+TOP_Y = 122                                  # both columns start below the leaves of the top corners
 INSTAGRAM = 'https://www.instagram.com/harmonieproducts'
 
 COPY = {
@@ -83,11 +84,11 @@ orn = asset('filete')
 pi = asset('ingredientes')
 formula = asset('formula', SC * 0.9)
 belleza = asset('belleza', SC * 0.8)
-seals = asset('sellos', SC * 0.78)
-fecha = asset('fecha', SC * 0.85)
+seals = asset('sellos', SC * 0.74)
+fecha = asset('fecha', SC * 0.8)
 
 tp, ti = text(COPY['propiedades'], LW), text(COPY['ingredientes'], LW)
-y = 70
+y = TOP_Y
 for item, dx, gap in ((pp, 0, 0), (tp, 4, 8), (orn, (LW - orn.width) / 2, 8), (pi, 0, 6), (ti, 4, 8)):
     y += gap
     place(item, LX + dx, y)
@@ -99,7 +100,7 @@ place(formula, LX, y + (row - formula.height) / 2)
 place(belleza, LX + LW - belleza.width, y + (row - belleza.height) / 2)
 y += row + 6
 # the "free" seals with the expiry date beside them
-place(seals, LX + 2, y)
+place(seals, LX + 16, y)                     # clear of the leaves at the left edge
 place(fecha, LX + LW - fecha.width, y + (seals.height - fecha.height) / 2)
 y += seals.height
 print('left column ends at', y)
@@ -109,7 +110,7 @@ RX0, RX1 = 1060, 1564                        # column
 RW = RX1 - RX0
 mu = asset('modo')                           # "Modo de uso" pill, at the head of the column
 orn_r = asset('filete_r', SC * 0.95)
-termo = asset('termometro', SC * 0.8)
+termo = asset('termometro', SC * 0.7)
 ig = asset('instagram')
 tt = asset('tiktok')
 tt_qr = asset('qr_tiktok')                   # (decorative QR from the model, as on the other labels)
@@ -128,7 +129,7 @@ ig_qr = Image.fromarray(np.dstack([qrgb, np.full(q.shape, 255.)]).astype(np.uint
 tt_qr = tt_qr.resize((round(tt_qr.width * ig_qr.height / tt_qr.height), ig_qr.height), Image.LANCZOS)
 social_h = max(ig.height, tt.height) + 8 + ig_qr.height
 
-y0, y1 = 70, 688                             # from the top of the panel to the leaves at the foot
+y0, y1 = TOP_Y, 712                          # from below the top leaves to the leaves at the foot
 used = mu.height + 8 + sum(s.height for s in steps) + 8 + orn_r.height + termo.height + social_h + hp.height
 gap = (y1 - y0 - used) / 4
 print('right column: free %.1f px -> gap %.1f' % (y1 - y0 - used, gap))
