@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Flyer Vaselinas Harmonie</title>
+<!--
+  Flyer de las Vaselinas nutritivas Harmonie: un cuarto de A4 (105 x 148.5 mm).
+  Se diseña a 1240 x 1754 px (300 ppi); render.js lo exporta a PNG y a PDF vectorial.
+  Acompaña al flyer de los aceites: mismos colores (crema, lila, ciruela y dorado) y tipografías.
+-->
+<style>
+  @font-face { font-family: 'Playfair'; src: url(fonts/PlayfairDisplay-Black.ttf); font-weight: 900; }
+  @font-face { font-family: 'Montserrat'; src: url(fonts/Montserrat-Medium.ttf); font-weight: 500; }
+  @font-face { font-family: 'Montserrat'; src: url(fonts/Montserrat-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Dancing'; src: url(fonts/DancingScript-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-Bold.ttf); font-weight: 700; }
+
+  @page { size: 105mm 148.5mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1240px; height: 1754px; overflow: hidden; background: #fbf1e9; }
+  :root {
+    --cream: #fbf1e9; --plum: #37183a; --plum-2: #4d1f52; --ink: #3a1438; --magenta: #ac1b5c;
+    --gold: #d6b88c; --gold-2: #c8963c; --lilac: #c7a6e0;
+  }
+  #flyer { position: relative; width: 1240px; height: 1754px; overflow: hidden; font-family: 'Montserrat'; color: var(--ink);
+    background: radial-gradient(ellipse 900px 700px at 620px 800px, #fffaf4 0%, #fbf1e9 55%, #f3e3f0 100%); }
+  svg.layer { position: absolute; left: 0; top: 0; width: 1240px; height: 1754px; }
+  .abs { position: absolute; }
+
+  .logo { left: 620px; top: 30px; width: 380px; transform: translateX(-50%); }
+  .producto { left: 0; width: 1240px; top: 262px; display: flex; justify-content: center; align-items: center; gap: 22px;
+    font-family: 'Cinzel'; font-weight: 700; font-size: 44px; letter-spacing: 7px; color: #a8721f; }
+  .producto i { display: block; width: 90px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-2), transparent); }
+  .titular { left: 0; width: 1240px; top: 330px; text-align: center; }
+  .titular .l1 { font-family: 'Playfair'; font-weight: 900; font-size: 112px; line-height: 1; color: var(--ink); letter-spacing: -1px; }
+  .titular .l2 { font-family: 'Dancing'; font-weight: 700; font-size: 124px; line-height: 1; color: var(--magenta); margin-top: -6px; }
+  .bajada { left: 110px; width: 1020px; top: 1288px; text-align: center; font-size: 31px; line-height: 1.32; font-weight: 500; color: var(--ink); }
+  .bajada b { font-weight: 700; color: var(--magenta); }
+
+  .pote { width: 222px; }
+  .nombre { width: 300px; text-align: center; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: .3px;
+    padding: 9px 0 10px; border-radius: 24px; box-shadow: 0 0 0 2.5px #e3c37e, 0 3px 8px rgba(40, 10, 40, .25); }
+  .chip { display: flex; align-items: center; gap: 10px; padding: 10px 22px 10px 12px; border-radius: 30px; background: #fff;
+    box-shadow: 0 0 0 2.5px #e3c37e, 0 4px 10px rgba(60, 20, 60, .16); font-size: 25px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .chip svg { width: 38px; height: 38px; }
+
+  .beneficios { left: 60px; width: 1120px; top: 1408px; display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+  .beneficios svg { width: 68px; height: 68px; display: block; margin: 0 auto 8px; }
+  .beneficios span { display: block; color: #fbf1e9; font-weight: 700; font-size: 21px; line-height: 1.15; }
+
+  .wa { left: 620px; top: 1566px; transform: translateX(-50%); width: 540px; height: 88px; border-radius: 44px; display: flex; align-items: center; justify-content: center; gap: 22px;
+    background: linear-gradient(180deg, #fffaf2, #f3e6d6); box-shadow: 0 0 0 4px #d6b88c, 0 0 0 7px rgba(214, 184, 140, .35);
+    font-weight: 700; font-size: 50px; color: var(--plum); letter-spacing: .5px; }
+  .wa svg { width: 56px; height: 56px; }
+  .wa i { width: 2px; height: 50px; background: #c8963c; }
+  .qr { top: 1546px; width: 134px; text-align: center; color: #fbf1e9; font-weight: 700; font-size: 18px; }
+  .qr div { width: 134px; height: 134px; padding: 9px; background: #fffaf2; border-radius: 12px; box-shadow: 0 0 0 3px #d6b88c; margin-bottom: 6px; }
+  .qr img { width: 116px; height: 116px;   /* 29 modules x 4 px */ display: block; image-rendering: pixelated; }
+  .pie { left: 0; width: 1240px; top: 1700px; text-align: center; color: #e9d6c0; font-size: 22px; font-weight: 500; letter-spacing: 3px; }
+  .pie em { font-style: normal; margin: 0 16px; color: #c8963c; }
+</style>
+</head>
+<body>
+<div id="flyer">
+  <svg class="layer" id="fondo" viewBox="0 0 1240 1754"></svg>
+
+  <img class="abs logo" src="assets/logo-harmonie.png" alt="Harmonie">
+  <div class="abs producto"><i></i><span>VASELINA NUTRITIVA</span><i></i></div>
+  <svg class="layer" id="familia" viewBox="0 0 1240 1754"></svg>
+  <div class="abs titular"><div class="l1">PARA TODA</div><div class="l2">la familia</div></div>
+
+  <div class="abs chip" style="left: 936px; top: 760px">
+    <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#4d1f52"/><path d="M14 10c-2 6 4 8 2 14s-2 8 0 8M21 9c-2 6 4 8 2 14s-2 8 0 8M28 10c-2 6 4 8 2 14s-2 8 0 8" fill="none" stroke="#f3d48e" stroke-width="2.4" stroke-linecap="round"/></svg>
+    Cabello rizado</div>
+  <div class="abs chip" style="left: 56px; top: 760px">
+    <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#4d1f52"/><path d="M14 9v22M20 9v22M26 9v22" fill="none" stroke="#f3d48e" stroke-width="2.4" stroke-linecap="round"/></svg>
+    Cabello lacio</div>
+
+  <img class="abs pote" src="assets/pote-sin-fragancia.png" style="left: 92px; top: 862px" alt="">
+  <img class="abs pote" src="assets/pote-batana.png" style="left: 926px; top: 862px" alt="">
+  <div class="abs nombre" style="left: 53px; top: 1232px; background: linear-gradient(180deg, #a481c9, #6f4a9c)">Sin fragancia</div>
+  <div class="abs nombre" style="left: 887px; top: 1232px; background: linear-gradient(180deg, #6a1272, #35074a)">Enriquecida con batana</div>
+
+  <p class="abs bajada">Sella la hidratación y aporta <b>nutrición, suavidad y brillo</b> a cada tipo de cabello: <b>rizado, ondulado o lacio</b>. Para grandes y chicos.</p>
+
+  <svg class="layer" id="banda" viewBox="0 0 1240 1754"></svg>
+  <div class="abs beneficios" id="beneficios"></div>
+  <div class="abs qr" style="left: 64px"><div><img src="assets/qr-instagram.svg" alt=""></div>Instagram</div>
+  <div class="abs qr" style="left: 1042px"><div><img src="assets/qr-tiktok.svg" alt=""></div>TikTok</div>
+  <div class="abs wa">
+    <svg viewBox="0 0 32 32"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3z" fill="none" stroke="#37183a" stroke-width="2.4" stroke-linejoin="round"/><path d="M11.5 9.6c.4-.4 1.2-.5 1.6 0l1.4 2.6c.2.4.1 1-.3 1.3l-.9.8c.9 2 2.6 3.6 4.5 4.5l.8-.9c.3-.4.9-.5 1.3-.3l2.6 1.4c.5.3.5 1.1 0 1.6-1.2 1.3-3 1.7-4.6 1-3.6-1.5-6.4-4.3-7.9-7.9-.7-1.6-.2-3.4 1.1-4.6z" fill="#37183a"/></svg>
+    <i></i><span>829-889-6187</span></div>
+  <div class="abs pie">WWW.HARMONIE.ES<em>|</em>@Harmonieproducts</div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function el(parent, tag, attrs = {}, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  parent.appendChild(e);
+  return e;
+}
+let seed = 11;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+function defs(svg, id) {
+  const d = el(svg, 'defs');
+  const lin = (name, stops, x2 = 0, y2 = 1) => {
+    const g = el(d, 'linearGradient', { id: name + id, x1: 0, y1: 0, x2, y2 });
+    stops.forEach(([o, c, a = 1]) => el(g, 'stop', { offset: o, 'stop-color': c, 'stop-opacity': a }));
+  };
+  lin('gold', [[0, '#7a4e0e'], [.22, '#c8963c'], [.45, '#fff0b5'], [.6, '#e3b558'], [.82, '#a8721f'], [1, '#6e4409']], 1, 1);
+  lin('goldV', [[0, '#fff3c4'], [.35, '#e7bd5e'], [.7, '#b07a22'], [1, '#7a4e0e']]);
+  lin('leaf', [[0, '#e3d0f2'], [1, '#a77fcf']], 1, 1);
+  lin('leafDeep', [[0, '#b58bd0'], [1, '#5e2a7a']], 1, 1);
+  lin('band', [[0, '#4d1f52'], [1, '#2c1030']]);
+  const rad = (name, stops, attrs = {}) => {
+    const g = el(d, 'radialGradient', { id: name + id, ...attrs });
+    stops.forEach(([o, c, a = 1]) => el(g, 'stop', { offset: o, 'stop-color': c, 'stop-opacity': a }));
+  };
+  rad('arch', [[0, '#f6ecfa'], [.7, '#e6d3f1'], [1, '#d3b8e8']], { cx: .5, cy: .4, r: .7 });
+  rad('glow', [[0, '#fff6e0', .9], [1, '#fff6e0', 0]]);
+  rad('wash', [[0, '#e3cff0', .75], [.6, '#e8d6f2', .4], [1, '#e8d6f2', 0]]);
+  rad('podium', [[0, '#fffaf2'], [.8, '#f0e2d2'], [1, '#e2cdb7']], { cy: .3, r: .8 });
+  const sh = el(d, 'filter', { id: 'shadow' + id, x: '-20%', y: '-20%', width: '140%', height: '150%' });
+  el(sh, 'feDropShadow', { dx: 0, dy: 6, stdDeviation: 8, 'flood-color': '#3b1030', 'flood-opacity': .22 });
+  return id;
+}
+
+function branch(g, id, { x, y, ang, len, bend = .25, n = 5, size = 60, fill = 'leaf', flip = 1, op = 1 }) {
+  const a = ang * Math.PI / 180, nx = -Math.sin(a), ny = Math.cos(a);
+  const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
+  const cx = (x + ex) / 2 + nx * len * bend * flip, cy = (y + ey) / 2 + ny * len * bend * flip;
+  const P = t => [(1 - t) ** 2 * x + 2 * (1 - t) * t * cx + t * t * ex, (1 - t) ** 2 * y + 2 * (1 - t) * t * cy + t * t * ey];
+  const T = t => Math.atan2(2 * (1 - t) * (cy - y) + 2 * t * (ey - cy), 2 * (1 - t) * (cx - x) + 2 * t * (ex - cx));
+  const b = el(g, 'g', { opacity: op });
+  el(b, 'path', { d: `M${x},${y} Q${cx},${cy} ${ex},${ey}`, fill: 'none', stroke: `url(#gold${id})`, 'stroke-width': size * .06, 'stroke-linecap': 'round' });
+  const leaf = (px, py, rot, s) => {
+    const L = s, W = s * .36;
+    const lg = el(b, 'g', { transform: `translate(${px},${py}) rotate(${rot * 180 / Math.PI})` });
+    el(lg, 'path', { d: `M0,0 C${L * .25},${-W} ${L * .7},${-W * .9} ${L},0 C${L * .7},${W * .9} ${L * .25},${W} 0,0Z`, fill: `url(#${fill}${id})`, stroke: `url(#gold${id})`, 'stroke-width': Math.max(1.2, s * .03) });
+    el(lg, 'path', { d: `M${L * .05},0 Q${L * .5},${-W * .12} ${L * .9},0`, fill: 'none', stroke: '#7a4a9a', 'stroke-width': Math.max(1, s * .02), opacity: .6 });
+  };
+  for (let i = 0; i < n; i++) {
+    const t = .18 + .72 * i / Math.max(n - 1, 1), [px, py] = P(t), th = T(t), s = size * (1 - .45 * t);
+    leaf(px, py, th - .75, s); leaf(px, py, th + .75, s * .95);
+  }
+  leaf(ex, ey, T(1), size * .6);
+}
+function sparkle(g, x, y, r, id, op = 1) {
+  const k = r * .2;
+  el(g, 'path', { d: `M${x},${y - r} L${x + k},${y - k} L${x + r},${y} L${x + k},${y + k} L${x},${y + r} L${x - k},${y + k} L${x - r},${y} L${x - k},${y - k}Z`, fill: `url(#goldV${id})`, opacity: op });
+}
+
+// ---------------------------------------------------------------- background
+(function () {
+  const s = document.getElementById('fondo'), id = defs(s, 'f'), g = el(s, 'g');
+  // soft lilac washes and side foliage, like the oil flyer
+  for (const [cx, cy, rx, ry] of [[40, 380, 330, 420], [1200, 360, 330, 440], [620, 1020, 620, 460]])
+    el(g, 'ellipse', { cx, cy, rx, ry, fill: `url(#wash${id})` });
+  for (const side of [-1, 1]) {
+    const X = side < 0 ? 0 : 1240, A = side < 0 ? 0 : 180;
+    branch(g, id, { x: X - side * 10, y: 250, ang: side < 0 ? -40 : 220, len: 220, n: 4, size: 52, flip: -side, bend: .2, op: .85 });
+    branch(g, id, { x: X, y: 1060, ang: side < 0 ? -78 : 258, len: 230, n: 4, size: 50, fill: 'leafDeep', flip: side, bend: .2, op: .7 });
+  }
+  for (const [x, y, r] of [[200, 120, 12], [1060, 140, 14], [140, 300, 8], [1110, 320, 9], [330, 560, 9], [930, 560, 10]]) sparkle(g, x, y, r, id, .9);
+})();
+
+// ---------------------------------------------------------------- the family
+const FAM = document.getElementById('familia'), F = defs(FAM, 'fa');
+const SKIN_LINE = '#5a2e1c';
+
+function curlyCloud(g, cx, cy, Rx, Ry, r, col, hi, n = 22, curls = 30) {
+  const cg = el(g, 'g');
+  el(cg, 'ellipse', { cx, cy, rx: Rx, ry: Ry, fill: col });
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2 + rnd() * .2;
+    el(cg, 'circle', { cx: cx + Math.cos(a) * Rx, cy: cy + Math.sin(a) * Ry, r: r * (.8 + rnd() * .45), fill: col });
+  }
+  for (let i = 0; i < curls; i++) {                       // little coils that read as curls
+    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * .92;
+    const x = cx + Math.cos(a) * Rx * d, y = cy + Math.sin(a) * Ry * d, k = r * (.3 + rnd() * .22);
+    el(cg, 'path', { d: `M${-k},0 a${k},${k} 0 1 1 ${k * 1.5},${k * .95}`, transform: `translate(${x},${y}) rotate(${rnd() * 360})`,
+                     fill: 'none', stroke: hi, 'stroke-width': Math.max(2.2, r * .12), 'stroke-linecap': 'round', opacity: .8 });
+  }
+  return cg;
+}
+
+function face(g, cx, cy, rx, ry, { skin, cheeks = '#e98a8a', open = false, brows = '#2a160e' }) {
+  el(g, 'ellipse', { cx: cx - rx * .97, cy: cy + ry * .08, rx: rx * .16, ry: ry * .2, fill: skin });   // ears
+  el(g, 'ellipse', { cx: cx + rx * .97, cy: cy + ry * .08, rx: rx * .16, ry: ry * .2, fill: skin });
+  el(g, 'ellipse', { cx, cy, rx, ry, fill: skin });
+  const ey = cy + ry * .02, ex = rx * .4, ew = rx * .2;
+  for (const s of [-1, 1]) {                              // happy closed eyes, brows, cheeks
+    el(g, 'path', { d: `M${cx + s * ex - ew},${ey} Q${cx + s * ex},${ey - ew * .9} ${cx + s * ex + ew},${ey}`, fill: 'none', stroke: SKIN_LINE, 'stroke-width': rx * .07, 'stroke-linecap': 'round' });
+    el(g, 'path', { d: `M${cx + s * ex - ew * 1.1},${ey - ry * .26} Q${cx + s * ex},${ey - ry * .34} ${cx + s * ex + ew * 1.1},${ey - ry * .27}`, fill: 'none', stroke: brows, 'stroke-width': rx * .065, 'stroke-linecap': 'round' });
+    el(g, 'ellipse', { cx: cx + s * rx * .55, cy: cy + ry * .3, rx: rx * .17, ry: ry * .1, fill: cheeks, opacity: .45 });
+  }
+  el(g, 'path', { d: `M${cx - rx * .06},${cy + ry * .22} Q${cx},${cy + ry * .3} ${cx + rx * .08},${cy + ry * .2}`, fill: 'none', stroke: SKIN_LINE, 'stroke-width': rx * .05, 'stroke-linecap': 'round', opacity: .6 });
+  const my = cy + ry * .48, mw = rx * .3;
+  if (open) el(g, 'path', { d: `M${cx - mw},${my} Q${cx},${my + ry * .32} ${cx + mw},${my} Z`, fill: '#7a2430', stroke: SKIN_LINE, 'stroke-width': rx * .04, 'stroke-linejoin': 'round' });
+  else el(g, 'path', { d: `M${cx - mw},${my} Q${cx},${my + ry * .24} ${cx + mw},${my}`, fill: 'none', stroke: SKIN_LINE, 'stroke-width': rx * .065, 'stroke-linecap': 'round' });
+  if (open) el(g, 'path', { d: `M${cx - mw * .75},${my + ry * .03} Q${cx},${my + ry * .1} ${cx + mw * .75},${my + ry * .03}`, fill: 'none', stroke: '#fff', 'stroke-width': ry * .06, 'stroke-linecap': 'round' });
+}
+
+function body(g, cx, top, w, bottom, { shirt, collar, skin, neckW }) {
+  el(g, 'rect', { x: cx - neckW / 2, y: top - 60, width: neckW, height: 80, fill: skin });
+  const r = w * .55;
+  el(g, 'path', { d: `M${cx - w},${bottom} L${cx - w},${top + r} Q${cx - w},${top} ${cx - w + r},${top} L${cx + w - r},${top} Q${cx + w},${top} ${cx + w},${top + r} L${cx + w},${bottom} Z`, fill: shirt });
+  el(g, 'path', { d: `M${cx - neckW * .85},${top - 1} Q${cx},${top + neckW * 1.05} ${cx + neckW * .85},${top - 1} Z`, fill: skin });
+  el(g, 'path', { d: `M${cx - neckW * .85},${top} Q${cx},${top + neckW * 1.05} ${cx + neckW * .85},${top}`, fill: 'none', stroke: collar, 'stroke-width': 7, 'stroke-linecap': 'round' });
+}
+
+(function () {
+  const g = el(FAM, 'g');
+  // arch behind the family, with a gold ring
+  const AX = 620, AY = 1080, AR = 380;
+  el(g, 'circle', { cx: AX, cy: 930, r: AR + 70, fill: `url(#glow${F})` });
+  const clip = el(el(FAM, 'defs'), 'clipPath', { id: 'archClip' });
+  const arch = `M${AX - AR},1220 L${AX - AR},${AY - 120} A${AR},${AR} 0 0 1 ${AX + AR},${AY - 120} L${AX + AR},1220 Z`;
+  el(clip, 'path', { d: arch });
+  el(g, 'path', { d: arch, fill: `url(#arch${F})` });
+  const people = el(g, 'g', { 'clip-path': 'url(#archClip)' });
+  el(g, 'path', { d: `M${AX - AR},1222 L${AX - AR},${AY - 120} A${AR},${AR} 0 0 1 ${AX + AR},${AY - 120} L${AX + AR},1222`, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 8 });
+  el(g, 'path', { d: `M${AX - AR + 18},1222 L${AX - AR + 18},${AY - 120} A${AR - 18},${AR - 18} 0 0 1 ${AX + AR - 18},${AY - 120} L${AX + AR - 18},1222`, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 2.5 });
+
+  const BOTTOM = 1240;
+  const fade = el(el(FAM, 'defs'), 'linearGradient', { id: 'fade', x1: 0, y1: 0, x2: 0, y2: 1 });
+  el(fade, 'stop', { offset: 0, 'stop-color': '#fbf1e9', 'stop-opacity': 0 });
+  el(fade, 'stop', { offset: 1, 'stop-color': '#fbf1e9', 'stop-opacity': .95 });
+  // ---- dad (back left): short tight curls, plum shirt
+  seed = 3;
+  const D = { x: 505, y: 760, rx: 66, ry: 80, skin: '#9c6040' };
+  body(people, D.x, D.y + 120, 150, BOTTOM, { shirt: '#4d1f52', collar: '#6e3a75', skin: D.skin, neckW: 52 });
+  face(people, D.x, D.y, D.rx, D.ry, { skin: D.skin });
+  curlyCloud(people, D.x, D.y - D.ry * .8, D.rx * .98, D.ry * .34, 14, '#1e110b', '#4a2c1e', 20, 24);
+
+  // ---- mom (back right): big curly hair, lilac top, gold earrings
+  seed = 7;
+  const M = { x: 742, y: 780, rx: 60, ry: 74, skin: '#c9895d' };
+  curlyCloud(people, M.x, M.y + 30, 150, 170, 30, '#2a160e', '#6a3e24', 30, 60);
+  body(people, M.x, M.y + 118, 132, BOTTOM, { shirt: '#b893d8', collar: '#d9c3ef', skin: M.skin, neckW: 44 });
+  face(people, M.x, M.y, M.rx, M.ry, { skin: M.skin, cheeks: '#e07a7a' });
+  for (const s of [-1, 1]) el(people, 'circle', { cx: M.x + s * M.rx * 1.0, cy: M.y + M.ry * .42, r: 9, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 4 });
+  curlyCloud(people, M.x - 4, M.y - M.ry * .86, M.rx * 1.1, M.ry * .3, 16, '#2a160e', '#6a3e24', 18, 20);
+
+  // ---- girl (front left): long straight chestnut hair with bangs
+  const G = { x: 462, y: 995, rx: 50, ry: 58, skin: '#e2ae86' };
+  const hair = '#5a311b', hairHi = '#8a5634';
+  el(people, 'path', { d: `M${G.x - G.rx * 1.18},${G.y - G.ry * .2} Q${G.x - G.rx * 1.25},${G.y - G.ry * 1.25} ${G.x},${G.y - G.ry * 1.22} Q${G.x + G.rx * 1.25},${G.y - G.ry * 1.25} ${G.x + G.rx * 1.18},${G.y - G.ry * .2} L${G.x + G.rx * 1.3},${G.y + G.ry * 2.2} Q${G.x},${G.y + G.ry * 2.45} ${G.x - G.rx * 1.3},${G.y + G.ry * 2.2} Z`, fill: hair });
+  body(people, G.x, G.y + 92, 96, BOTTOM, { shirt: '#c2407e', collar: '#f3b8d3', skin: G.skin, neckW: 34 });
+  for (const s of [-1, 1])                                 // hair falling in front of the shoulders
+    el(people, 'path', { d: `M${G.x + s * G.rx * .82},${G.y + G.ry * .1} L${G.x + s * G.rx * 1.3},${G.y + G.ry * .2} L${G.x + s * G.rx * 1.36},${G.y + G.ry * 2.25} Q${G.x + s * G.rx * 1.05},${G.y + G.ry * 2.38} ${G.x + s * G.rx * .86},${G.y + G.ry * 2.2} Z`, fill: hair });
+  face(people, G.x, G.y, G.rx, G.ry, { skin: G.skin, open: true, brows: '#4a2814' });
+  el(people, 'path', { d: `M${G.x - G.rx * 1.06},${G.y + G.ry * .05} Q${G.x - G.rx * 1.12},${G.y - G.ry * 1.18} ${G.x},${G.y - G.ry * 1.16} Q${G.x + G.rx * 1.12},${G.y - G.ry * 1.18} ${G.x + G.rx * 1.06},${G.y + G.ry * .05} L${G.x + G.rx * .88},${G.y - G.ry * .32} Q${G.x + G.rx * .45},${G.y - G.ry * .44} ${G.x},${G.y - G.ry * .38} Q${G.x - G.rx * .45},${G.y - G.ry * .44} ${G.x - G.rx * .88},${G.y - G.ry * .32} Z`, fill: hair });
+  for (const dx of [-.5, -.17, .17, .5])                // straight strands on the bangs...
+    el(people, 'path', { d: `M${G.x + dx * G.rx * .9},${G.y - G.ry * 1.02} L${G.x + dx * G.rx},${G.y - G.ry * .44}`, stroke: hairHi, 'stroke-width': 2.4, opacity: .55, 'stroke-linecap': 'round' });
+  for (const s of [-1, 1]) for (const k of [1.0, 1.16])   // ...and down the side locks
+    el(people, 'path', { d: `M${G.x + s * G.rx * k},${G.y + G.ry * .3} L${G.x + s * G.rx * (k + .08)},${G.y + G.ry * 2.15}`, stroke: hairHi, 'stroke-width': 2.4, opacity: .55, 'stroke-linecap': 'round' });
+  el(people, 'path', { d: `M${G.x - G.rx * .7},${G.y - G.ry * .92} Q${G.x},${G.y - G.ry * 1.1} ${G.x + G.rx * .7},${G.y - G.ry * .92}`, fill: 'none', stroke: '#c48a5c', 'stroke-width': 6, opacity: .55, 'stroke-linecap': 'round' });
+  el(people, 'circle', { cx: G.x + G.rx * .78, cy: G.y - G.ry * .62, r: 9, fill: '#f3b8d3', stroke: '#ac1b5c', 'stroke-width': 2.5 });   // hair clip
+
+  // ---- boy (front right): springy curls, mustard tee
+  seed = 19;
+  const B = { x: 700, y: 1012, rx: 48, ry: 56, skin: '#b5754d' };
+  body(people, B.x, B.y + 88, 94, BOTTOM, { shirt: '#e2b04a', collar: '#f4d68c', skin: B.skin, neckW: 34 });
+  face(people, B.x, B.y, B.rx, B.ry, { skin: B.skin, open: true });
+  curlyCloud(people, B.x, B.y - B.ry * .72, B.rx * 1.04, B.ry * .42, 15, '#24140c', '#5e3820', 18, 20);
+  el(people, 'rect', { x: AX - AR, y: 1120, width: AR * 2, height: 110, fill: 'url(#fade)' });
+})();
+
+// podium under the jars
+(function () {
+  const g = el(FAM, 'g');
+  for (const cx of [203, 1037]) {
+    el(g, 'ellipse', { cx, cy: 1222, rx: 150, ry: 26, fill: `url(#podium${F})`, stroke: `url(#gold${F})`, 'stroke-width': 3 });
+    el(g, 'ellipse', { cx, cy: 1214, rx: 112, ry: 12, fill: '#3b1030', opacity: .18 });
+  }
+  for (const [x, y, r] of [[140, 840, 10], [1100, 860, 11], [300, 1180, 7], [940, 1176, 8]]) sparkle(g, x, y, r, F);
+})();
+
+// ---------------------------------------------------------------- plum band
+(function () {
+  const s = document.getElementById('banda'), id = defs(s, 'b'), g = el(s, 'g');
+  const top = 1384;
+  el(g, 'path', { d: `M0,${top + 30} Q620,${top - 30} 1240,${top + 30} L1240,1754 L0,1754 Z`, fill: `url(#band${id})` });
+  el(g, 'path', { d: `M0,${top + 30} Q620,${top - 30} 1240,${top + 30}`, fill: 'none', stroke: `url(#gold${id})`, 'stroke-width': 5 });
+  el(g, 'path', { d: 'M200,1713 L290,1713 M950,1713 L1040,1713', stroke: '#c8963c', 'stroke-width': 1.5, opacity: .7 });
+  for (const side of [-1, 1])
+    branch(g, id, { x: side < 0 ? -10 : 1250, y: 1754, ang: side < 0 ? -58 : 238, len: 170, n: 4, size: 46, fill: 'leafDeep', flip: side, bend: .2, op: .6 });
+})();
+
+(function () {
+  const box = document.getElementById('beneficios');
+  const items = [['Sella la\nhidratación', 'drop'], ['Suaviza y\nnutre', 'feather'], ['Aporta\nbrillo', 'shine'], ['Facilita el\npeinado', 'comb']];
+  items.forEach(([label, icon], i) => {
+    const d = document.createElement('div'); box.appendChild(d);
+    const s = el(d, 'svg', { viewBox: '0 0 84 84' });
+    const id = defs(s, 'bn' + i);
+    el(s, 'circle', { cx: 42, cy: 42, r: 39, fill: 'none', stroke: `url(#gold${id})`, 'stroke-width': 3 });
+    const ic = el(s, 'g', { fill: 'none', stroke: '#e9c98f', 'stroke-width': 2.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', transform: 'translate(3,3)' });
+    if (icon === 'drop') { el(ic, 'path', { d: 'M39,18 C44,27 51,34 51,43 a12,12 0 0 1 -24,0 C27,34 34,27 39,18Z' }); el(ic, 'path', { d: 'M33,44 l4,4 l8,-9' }); }
+    if (icon === 'feather') { el(ic, 'path', { d: 'M24,55 C30,40 40,26 55,20 C55,36 46,47 31,50' }); el(ic, 'path', { d: 'M27,53 L46,32 M34,46 h9 M39,40 h8' }); }
+    if (icon === 'shine') { el(ic, 'path', { d: 'M39,19 L42.5,35.5 L59,39 L42.5,42.5 L39,59 L35.5,42.5 L19,39 L35.5,35.5Z', fill: '#e9c98f', stroke: 'none' }); el(ic, 'path', { d: 'M54,22 l0,6 M51,25 l6,0 M24,52 l0,5 M21.5,54.5 l5,0' }); }
+    if (icon === 'comb') { el(ic, 'path', { d: 'M22,33 h34 a3,3 0 0 1 3,3 v3 h-40 v-3 a3,3 0 0 1 3,-3Z', fill: '#e9c98f' }); for (let x = 23; x <= 56; x += 4.6) el(ic, 'path', { d: `M${x},39 v${x < 40 ? 14 : 10}` }); }
+    const sp = document.createElement('span'); sp.innerText = label; d.appendChild(sp);
+  });
+})();
+
+window.listo = document.fonts.ready;
+</script>
+</body>
+</html>
