@@ -250,71 +250,6 @@ def glitter():
         comp(flyer, np.full((H, Wd, 3), (255, 248, 222), np.float32), np.clip(m + cv2.GaussianBlur(m, (0, 0), r * 0.8) * 0.7, 0, 1))
 
 
-def leaf_img(length, width, color, s=SS):
-    """One lilac leaf (pointing +x) as an RGBA image, with a pale midrib and side veins."""
-    L, Wl = length * s, width * s
-    img = Image.new('RGBA', (int(L) + 4, int(2 * Wl) + 4), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    t = np.linspace(0, 1, 40)
-    half = Wl * np.sin(math.pi * t) ** 0.75 * (1 - 0.25 * t)
-    top = [(2 + L * a, 2 + Wl - h) for a, h in zip(t, half)]
-    bot = [(2 + L * a, 2 + Wl + h) for a, h in zip(t[::-1], half[::-1])]
-    edge = tuple(int(c * 0.82) for c in color[:3]) + (color[3],)
-    d.polygon(top + bot, fill=color, outline=edge)
-    vein = (236, 222, 252, int(color[3] * 0.8))
-    d.line([(2, 2 + Wl), (2 + L * 0.96, 2 + Wl)], fill=vein, width=max(1, int(0.9 * s)))
-    for a in np.linspace(0.18, 0.78, 5):
-        x0 = 2 + L * a
-        hh = Wl * math.sin(math.pi * a) ** 0.75 * (1 - 0.25 * a) * 0.8
-        for sg in (-1, 1):
-            d.line([(x0, 2 + Wl), (x0 + L * 0.12, 2 + Wl + sg * hh)], fill=vein, width=max(1, int(0.6 * s)))
-    return img
-
-
-def lilac_leaves(cx, cy, r, disc):
-    """Tone-on-tone sprigs of lilac leaves filling the half-moon, like the labels' leaf pattern."""
-    layer = Image.new('RGBA', (Wd * SS, H * SS), (0, 0, 0, 0))
-    palette = [(150, 100, 204), (172, 128, 222), (196, 162, 236), (132, 86, 192), (214, 186, 244)]
-
-    def put_leaf(x, y, ang, length):
-        col = palette[rng.integers(0, len(palette))] + (int(rng.uniform(150, 230)),)
-        im = leaf_img(length, length * rng.uniform(0.26, 0.34), col)
-        im = im.rotate(-math.degrees(ang), resample=Image.BICUBIC, expand=True)
-        # rotate() keeps the image centre fixed; the leaf base was at the left-middle
-        bx = x * SS - im.width / 2 + math.cos(ang) * (length * SS / 2)
-        by = y * SS - im.height / 2 + math.sin(ang) * (length * SS / 2)
-        layer.alpha_composite(im, (int(bx), int(by)))
-
-    sprigs = 16
-    for k in range(sprigs):
-        bx = cx - r * 0.85 + 2 * r * 0.85 * (k + rng.uniform(0.2, 0.8)) / sprigs
-        ang0 = -math.pi / 2 + (bx - cx) / r * 0.9 + rng.normal(0, 0.12)
-        length = rng.uniform(220, 330)
-        bend = rng.normal(0, 0.25)
-        pts = []
-        for i in range(60):
-            t = i / 59
-            a = ang0 + bend * t
-            if not pts:
-                pts.append((bx, SHELF + 4))
-            px, py = pts[-1]
-            pts.append((px + math.cos(a) * length / 59, py + math.sin(a) * length / 59))
-        ImageDraw.Draw(layer).line([(x * SS, y * SS) for x, y in pts], fill=(140, 96, 190, 200), width=int(1.4 * SS))
-        for j, i in enumerate(range(6, 60, 6)):
-            x, y = pts[i]
-            a = ang0 + bend * i / 59
-            side = 1 if j % 2 else -1
-            put_leaf(x, y, a + side * rng.uniform(0.6, 0.95), rng.uniform(40, 58) * (1 - 0.35 * i / 59))
-        put_leaf(*pts[-1], ang0 + bend, rng.uniform(36, 46))
-    for _ in range(28):                                   # loose leaves filling the upper arc
-        a = rng.uniform(math.pi * 1.08, math.pi * 1.92)
-        rad = rng.uniform(0.45, 0.92) * r
-        put_leaf(cx + rad * math.cos(a), cy + rad * math.sin(a), rng.uniform(0, 2 * math.pi), rng.uniform(34, 52))
-    arr = np.array(layer.resize((Wd, H), Image.LANCZOS), np.float32)
-    inner = smoothstep(r - 4, r - 12, np.hypot(XX - cx, YY - cy))
-    comp(flyer, arr[..., :3], arr[..., 3] / 255 * disc * inner * 0.8)
-
-
 def moon():
     cx, cy, r = 572, 1005, 330
     rr = np.hypot(XX - cx, YY - cy)
@@ -325,7 +260,6 @@ def moon():
     sh = cv2.GaussianBlur(np.roll(disc, (8, 6), (0, 1)), (0, 0), 10) * 0.35
     comp(flyer, np.full((H, Wd, 3), (60, 14, 60), np.float32), sh)
     comp(flyer, fillc, disc * 0.95)
-    lilac_leaves(cx, cy, r, disc)
     gold = lerp(GOLD_HI, GOLD_LO, smoothstep(cy - r, cy, YY))
     for rc, ccx, ccy, w in ((r, cx, cy, 3.0), (r + 22, cx + 26, cy - 6, 1.4), (r - 16, cx, cy, 0.9)):
         ring = np.exp(-((np.hypot(XX - ccx, YY - ccy) - rc) / w) ** 2) * below_shelf
