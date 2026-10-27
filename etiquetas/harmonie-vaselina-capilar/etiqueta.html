@@ -33,18 +33,18 @@
     --qr-card: #fffaf0;
     --drop-a: #fffaf0; --drop-b: #f6e7b8; --drop-c: #d9b45c; --drop-edge: #b8862e;
   }
-  .batana {
-    --bg-in: #fbedc2; --bg-mid: #efd28a; --bg-out: #c9973e;
-    --ink: #2e1a06; --ink-soft: #4a2c0c;
-    --pill-a: #6b4214; --pill-b: #3e2408; --pill-ink: #fbe7b5; --pill-icon: #5e3a10;
-    --accent: #6b4214; --accent-dark: #3e2408;
-    --ribbon-a: #8a5a22; --ribbon-b: #5e3a10; --ribbon-c: #43280a; --ribbon-ink: #fbe7b5;
-    --leaf-a: #f3d98e; --leaf-b: #b98a32; --leaf-vein: #7d5517;
-    --oval-in: #fffaea; --oval-out: #f4dfa4;
-    --seal-a: #7a4a16; --seal-b: #3e2408;
-    --brush-a: #6b4214; --brush-b: #3a2106;
-    --qr-card: #fff6dc;
-    --drop-a: #f6c46a; --drop-b: #b86a1c; --drop-c: #6e3508; --drop-edge: #4e2504;
+  .batana {                       /* ivory, deep plum and gold, like the "fortalecimiento capilar" oil */
+    --bg-in: #fdfcf3; --bg-mid: #fdf4e4; --bg-out: #f6e6c8;
+    --ink: #24141c; --ink-soft: #3a2030;
+    --pill-a: #6a1272; --pill-b: #35074a; --pill-ink: #fdf1dc; --pill-icon: #55085b;
+    --accent: #682979; --accent-dark: #4a0c5a;
+    --ribbon-a: #7e3f93; --ribbon-b: #5a1a6e; --ribbon-c: #35074a; --ribbon-ink: #fdf1dc;
+    --leaf-a: #c39ad4; --leaf-b: #6e2f88; --leaf-vein: #4a1260;
+    --oval-in: #fffef8; --oval-out: #f9edd6;
+    --seal-a: #6a1272; --seal-b: #35074a;
+    --brush-a: #55085b; --brush-b: #380a43;
+    --qr-card: #fffdf6;
+    --drop-a: #fff4c2; --drop-b: #f6bf24; --drop-c: #b07a06; --drop-edge: #8a5a04;
   }
 
   #label {
@@ -280,18 +280,6 @@ const back = document.getElementById('back');
 const B = defs(back, 'b');
 (function () {
   const g = el(back, 'g');
-  // corner sprays, mirrored left/right
-  const sprays = [
-    { x: -20, y: 22, ang: -6, len: 250, n: 5, size: 56, bend: .2, flip: 1, gold: true },
-    { x: 380, y: -40, ang: 160, len: 190, n: 4, size: 46, bend: .2, flip: 1, op: .85 },
-    { x: -30, y: 800, ang: -14, len: 230, n: 5, size: 54, bend: -.2, flip: 1, gold: true },
-    { x: 40, y: 840, ang: -62, len: 130, n: 3, size: 48, bend: .2, flip: 1 },
-    { x: 520, y: 836, ang: -160, len: 170, n: 4, size: 44, bend: -.2, flip: 1, op: .85 },
-  ];
-  for (const s of sprays) {
-    branch(g, B, s);
-    branch(g, B, { ...s, x: 1920 - s.x, ang: 180 - s.ang, flip: -s.flip });
-  }
   // sprays hugging the oval, top and bottom
   for (const side of [-1, 1]) {
     branch(g, B, { x: 960 + side * 150, y: -20, ang: side < 0 ? 200 : -20, len: 260, n: 5, size: 58, bend: .18, flip: side, gold: true });
