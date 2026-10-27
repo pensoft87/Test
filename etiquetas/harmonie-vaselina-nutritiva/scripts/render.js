@@ -3,7 +3,7 @@
 const path = require('path');
 const { chromium } = require('playwright');
 
-const VARIANTES = { 'sin-fragancia': 'vaselina-capilar-sin-fragancia', 'batana': 'vaselina-capilar-batana' };
+const VARIANTES = { 'sin-fragancia': 'vaselina-nutritiva-sin-fragancia', 'batana': 'vaselina-nutritiva-batana' };
 const out = process.argv[2] || '.';
 const page_ = 'file://' + path.resolve(__dirname, '..', 'etiqueta.html');
 
