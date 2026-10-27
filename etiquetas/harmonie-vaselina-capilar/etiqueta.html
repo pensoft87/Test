@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Etiqueta Vaselina Capilar</title>
+<!--
+  Harmonie · Vaselina capilar — etiqueta de 6 x 2.5 in.
+  Se diseña a 1920 x 800 px (320 ppi). La variante se elige con el hash: #sin-fragancia o #batana.
+  render.js la exporta a PNG (320 ppi) y a PDF vectorial de 6 x 2.5 in.
+-->
+<style>
+  @font-face { font-family: 'PT Serif'; src: url(fonts/PTSerif-Regular.ttf); font-weight: 400; }
+  @font-face { font-family: 'PT Serif'; src: url(fonts/PTSerif-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-ExtraBold.ttf); font-weight: 800; }
+  @font-face { font-family: 'Great Vibes'; src: url(fonts/GreatVibes-Regular.ttf); }
+
+  @page { size: 6in 2.5in; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 800px; overflow: hidden; background: #fff; }
+
+  /* ---- palettes ------------------------------------------------------------------------- */
+  .sin-fragancia {
+    --bg-in: #fffdf6; --bg-mid: #fbf3e4; --bg-out: #eadcf0;
+    --ink: #2c1838; --ink-soft: #4a2f5c;
+    --pill-a: #e9dcf4; --pill-b: #cdb3e3; --pill-ink: #3d1f5c; --pill-icon: #5b2d86;
+    --accent: #6b3a9a; --accent-dark: #3d1f5c;
+    --ribbon-a: #c9aee2; --ribbon-b: #9a74c4; --ribbon-c: #7d58aa; --ribbon-ink: #ffffff;
+    --leaf-a: #e7d8f3; --leaf-b: #b597d6; --leaf-vein: #8a64b5;
+    --oval-in: #fffef9; --oval-out: #f8eedb;
+    --seal-a: #6b3a9a; --seal-b: #3d1f5c;
+    --brush-a: #5b2d86; --brush-b: #3a1857;
+    --qr-card: #fffaf0;
+    --drop-a: #fffaf0; --drop-b: #f6e7b8; --drop-c: #d9b45c; --drop-edge: #b8862e;
+  }
+  .batana {
+    --bg-in: #fbedc2; --bg-mid: #efd28a; --bg-out: #c9973e;
+    --ink: #2e1a06; --ink-soft: #4a2c0c;
+    --pill-a: #6b4214; --pill-b: #3e2408; --pill-ink: #fbe7b5; --pill-icon: #5e3a10;
+    --accent: #6b4214; --accent-dark: #3e2408;
+    --ribbon-a: #8a5a22; --ribbon-b: #5e3a10; --ribbon-c: #43280a; --ribbon-ink: #fbe7b5;
+    --leaf-a: #f3d98e; --leaf-b: #b98a32; --leaf-vein: #7d5517;
+    --oval-in: #fffaea; --oval-out: #f4dfa4;
+    --seal-a: #7a4a16; --seal-b: #3e2408;
+    --brush-a: #6b4214; --brush-b: #3a2106;
+    --qr-card: #fff6dc;
+    --drop-a: #f6c46a; --drop-b: #b86a1c; --drop-c: #6e3508; --drop-edge: #4e2504;
+  }
+
+  #label {
+    position: relative; width: 1920px; height: 800px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 760px 520px at 960px 400px, var(--bg-in) 0%, var(--bg-mid) 55%, transparent 100%),
+      radial-gradient(ellipse 1300px 700px at 960px 400px, var(--bg-mid) 30%, var(--bg-out) 100%);
+    font-family: 'PT Serif', serif; color: var(--ink);
+  }
+  svg.layer { position: absolute; left: 0; top: 0; width: 1920px; height: 800px; }
+
+  /* ---- side panels ---------------------------------------------------------------------- */
+  .panel { position: absolute; top: 74px; }
+  .panel.left { left: 56px; width: 540px; }
+  .panel.right { left: 1324px; width: 540px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 30px 0 8px;
+    border-radius: 26px; background: linear-gradient(180deg, var(--pill-a), var(--pill-b));
+    box-shadow: 0 0 0 2.5px #d9ae55, 0 0 0 4px rgba(122, 78, 14, .35), 0 3px 8px rgba(60, 30, 0, .18);
+    font-size: 31px; color: var(--pill-ink); letter-spacing: .2px;
+  }
+  .pill .ico {
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 35% 30%, #fff9e6, #efd391 60%, #c8963c);
+  }
+  .pill .ico svg { width: 26px; height: 26px; }
+  .body { margin-top: 14px; font-size: 24.5px; line-height: 1.32; text-align: justify; hyphens: none;
+          text-align-last: left; text-wrap: pretty; color: var(--ink); }
+  .divider { height: 26px; margin: 16px 0 14px; }
+
+  .free { display: flex; gap: 16px; margin-top: 24px; }
+  .free svg { width: 92px; height: 92px; }
+
+  .fecha { display: flex; align-items: center; gap: 14px; margin-top: 18px; font-size: 22px; color: var(--ink); }
+  .fecha svg { width: 44px; height: 46px; flex: none; }
+  .fecha .line { width: 170px; border-bottom: 2px dotted var(--accent); height: 24px; margin-left: 4px; }
+
+  .beneficios { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; text-align: center; }
+  .beneficios .b svg { width: 78px; height: 78px; display: block; margin: 0 auto 6px; }
+  .beneficios .b span { font-size: 18.5px; line-height: 1.15; display: block; color: var(--ink); }
+
+  .uso { display: flex; align-items: center; gap: 14px; margin-top: 4px; font-size: 21px; line-height: 1.25; }
+  .uso svg { width: 30px; height: 60px; flex: none; }
+  .uso b { font-weight: 700; }
+
+  .social { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; }
+  .social .s { flex: none; }
+  .handle { flex: 1; position: relative; height: 92px; margin: 0 0 18px; }
+  .handle svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .social .s { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 150px; }
+  .social .tag {
+    display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 20px 0 12px; border-radius: 20px;
+    background: linear-gradient(180deg, var(--pill-a), var(--pill-b)); color: var(--pill-ink); font-size: 21px;
+    box-shadow: 0 0 0 2px #d9ae55, 0 2px 5px rgba(60, 30, 0, .15);
+  }
+  .social .tag svg { width: 24px; height: 24px; }
+  .social .card { width: 128px; height: 128px; padding: 9px; background: var(--qr-card); border-radius: 8px;
+                  box-shadow: 0 0 0 2px #d9ae55, 0 2px 6px rgba(60, 30, 0, .18); }
+  .social .card img { width: 110px; height: 110px; display: block; image-rendering: pixelated; }
+
+  /* ---- centre ------------------------------------------------------------------------- */
+  .logo { position: absolute; left: 960px; top: 34px; width: 430px; transform: translateX(-50%); }
+  .titulo {
+    position: absolute; left: 0; width: 1920px; top: 286px; text-align: center;
+    font-family: 'Cinzel'; font-weight: 800; font-size: 84px; letter-spacing: 3px; line-height: 1;
+  }
+  .sub {
+    position: absolute; left: 0; width: 1920px; top: 382px; display: flex; justify-content: center; align-items: center; gap: 18px;
+    font-family: 'Cinzel'; font-weight: 700; font-size: 31px; letter-spacing: 11px; color: var(--accent-dark);
+  }
+  .sub i { display: block; width: 74px; height: 2px; background: linear-gradient(90deg, transparent, #c8963c, transparent); }
+  .tagline {
+    position: absolute; left: 0; width: 1920px; top: 520px; text-align: center; font-size: 22px; font-weight: 700;
+    color: var(--accent-dark); letter-spacing: .5px;
+  }
+  .tagline em { font-style: normal; color: #c8963c; margin: 0 10px; }
+</style>
+</head>
+<body>
+<div id="label">
+  <svg class="layer" id="back" viewBox="0 0 1920 800"></svg>
+
+  <!-- left panel -->
+  <div class="panel left">
+    <div class="pill"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 19c1-7 5-12 14-14-1 9-6 13-12 13" fill="none" stroke="var(--pill-icon)" stroke-width="2.2" stroke-linecap="round"/><path d="M5 19c3-4 6-7 10-10" fill="none" stroke="var(--pill-icon)" stroke-width="2" stroke-linecap="round"/></svg></span>Propiedades</div>
+    <p class="body" id="propiedades"></p>
+    <svg class="divider" viewBox="0 0 556 26" data-divider></svg>
+    <div class="pill"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 19c1-7 5-12 14-14-1 9-6 13-12 13" fill="none" stroke="var(--pill-icon)" stroke-width="2.2" stroke-linecap="round"/><path d="M5 19c3-4 6-7 10-10" fill="none" stroke="var(--pill-icon)" stroke-width="2" stroke-linecap="round"/></svg></span>Ingredientes</div>
+    <p class="body" id="ingredientes"></p>
+    <div class="free" id="free"></div>
+    <div class="fecha">
+      <svg viewBox="0 0 44 46"><g fill="none" stroke="var(--accent-dark)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="38" height="35" rx="6"/><path d="M3 18h38" /><path d="M13 3v9M31 3v9"/><path d="M13 30l6 6 12-12"/></g></svg>
+      <span>Fecha de caducidad:</span><span class="line"></span>
+    </div>
+  </div>
+
+  <!-- right panel -->
+  <div class="panel right">
+    <div class="pill"><span class="ico"><svg viewBox="0 0 24 24"><g fill="none" stroke="var(--pill-icon)" stroke-width="2.1"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M5.5 18.5l1.9-1.9M16.6 7.4l1.9-1.9"/><circle cx="12" cy="12" r="6.6"/></g></svg></span>Modo de uso</div>
+    <p class="body" id="modo" style="font-size: 27px" data-range="2"></p>
+    <svg class="divider" viewBox="0 0 556 26" data-divider></svg>
+    <div class="beneficios" id="beneficios"></div>
+    <svg class="divider" viewBox="0 0 556 26" data-divider></svg>
+    <div class="uso">
+      <svg viewBox="0 0 30 60"><g fill="none" stroke="var(--accent-dark)" stroke-width="3"><path d="M10 40V8a5 5 0 0 1 10 0v32a9 9 0 1 1-10 0z"/></g><circle cx="15" cy="47" r="5" fill="var(--accent-dark)"/><path d="M15 44V20" stroke="var(--accent-dark)" stroke-width="3.4" stroke-linecap="round"/></svg>
+      <div><b>Uso externo.</b><br>No someter a calor extremo.</div>
+    </div>
+    <div class="social">
+      <div class="s">
+        <span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor"/></svg>Instagram</span>
+        <div class="card"><img src="assets/qr-instagram.svg" alt=""></div>
+      </div>
+      <div class="handle"><svg id="handle" viewBox="0 0 240 92"></svg></div>
+      <div class="s">
+        <span class="tag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 2h3.1c.3 2.3 1.7 3.9 4 4.2v3.2c-1.5 0-2.9-.4-4-1.2v6.9a6.3 6.3 0 1 1-6.3-6.3c.4 0 .7 0 1 .1v3.3a3.1 3.1 0 1 0 2.2 3V2z"/></svg>TikTok</span>
+        <div class="card"><img src="assets/qr-tiktok.svg" alt=""></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- centre -->
+  <svg class="layer" id="front" viewBox="0 0 1920 800"></svg>
+  <img class="logo" src="assets/logo-harmonie.png" alt="Harmonie">
+  <div class="titulo"><svg width="1920" height="100" viewBox="0 0 1920 100" id="titulo"></svg></div>
+  <div class="sub"><i></i><span>CAPILAR</span><i></i></div>
+  <div class="tagline" id="tagline"></div>
+  <svg class="layer" id="top" viewBox="0 0 1920 800"></svg>
+</div>
+
+<script>
+const VARIANTES = {
+  'sin-fragancia': {
+    cinta: 'Sin fragancia',
+    propiedades: 'Vaselina capilar formulada para ayudar a sellar la hidratación, suavizar, aportar brillo ' +
+                 'y facilitar el peinado. Con manteca de karité y aceites de jojoba y argán que aportan nutrición.',
+    ingredientes: 'Manteca de karité, aceite de salvado de arroz, aceite de jojoba, aceite de argán, vaselina y vitamina E.',
+  },
+  'batana': {
+    cinta: 'Enriquecida con batana',
+    propiedades: 'Vaselina capilar formulada con ingredientes nutritivos como la batana, jojoba, argán y manteca ' +
+                 'de karité que aportan nutrición y ayudan a sellar la hidratación, suavizar, dar brillo y ' +
+                 'facilitar el peinado.',
+    ingredientes: 'Aceite de batana, manteca de karité, aceite de salvado de arroz, aceite de jojoba, aceite de ' +
+                  'argán, vaselina, vitamina E y fragancia.',
+  },
+};
+const MODO = 'Aplicar de medios a puntas y peinar como de costumbre.';
+
+const key = (location.hash || '#sin-fragancia').slice(1);
+const V = VARIANTES[key];
+document.getElementById('label').className = key;
+document.getElementById('propiedades').textContent = V.propiedades;
+document.getElementById('ingredientes').textContent = V.ingredientes;
+document.getElementById('modo').textContent = MODO;
+document.getElementById('tagline').innerHTML = 'Nutre<em>•</em>Suaviza<em>•</em>Da brillo';
+
+const NS = 'http://www.w3.org/2000/svg';
+const css = n => getComputedStyle(document.getElementById('label')).getPropertyValue(n).trim();
+function el(parent, tag, attrs = {}, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  parent.appendChild(e);
+  return e;
+}
+
+// ---- shared gradients -------------------------------------------------------------------
+function defs(svg, id) {
+  const d = el(svg, 'defs');
+  const lin = (name, stops, x2 = 0, y2 = 1, extra = {}) => {
+    const g = el(d, 'linearGradient', { id: name + id, x1: 0, y1: 0, x2, y2, ...extra });
+    stops.forEach(([o, c]) => el(g, 'stop', { offset: o, 'stop-color': c }));
+  };
+  lin('gold', [[0, '#7a4e0e'], [.22, '#c8963c'], [.45, '#fff0b5'], [.6, '#e3b558'], [.82, '#a8721f'], [1, '#6e4409']], 1, 1);
+  lin('goldV', [[0, '#fff3c4'], [.35, '#e7bd5e'], [.7, '#b07a22'], [1, '#7a4e0e']]);
+  lin('leaf', [[0, css('--leaf-a')], [1, css('--leaf-b')]], 1, 1);
+  lin('ribbon', [[0, css('--ribbon-a')], [.55, css('--ribbon-b')], [1, css('--ribbon-c')]]);
+  lin('ribbonBack', [[0, css('--ribbon-c')], [1, css('--ribbon-b')]]);
+  lin('brush', [[0, css('--brush-a')], [1, css('--brush-b')]], 1, 0);
+  const rad = (name, stops, attrs) => {
+    const g = el(d, 'radialGradient', { id: name + id, ...attrs });
+    stops.forEach(([o, c, a = 1]) => el(g, 'stop', { offset: o, 'stop-color': c, 'stop-opacity': a }));
+  };
+  rad('oval', [[0, css('--oval-in')], [.7, css('--oval-in')], [1, css('--oval-out')]], { cx: .5, cy: .42, r: .62 });
+  rad('glow', [[0, '#fff8dc', .95], [.5, '#fff3c8', .45], [1, '#fff3c8', 0]], {});
+  rad('drop', [[0, css('--drop-a')], [.55, css('--drop-b')], [1, css('--drop-c')]], { cx: .38, cy: .62, r: .7 });
+  rad('seal', [[0, css('--seal-a')], [1, css('--seal-b')]], { cx: .4, cy: .35, r: .75 });
+  const f = el(d, 'filter', { id: 'rough' + id, x: '-5%', y: '-20%', width: '110%', height: '140%' });
+  el(f, 'feTurbulence', { type: 'fractalNoise', baseFrequency: '0.035 0.18', numOctaves: 3, seed: 7, result: 'n' });
+  el(f, 'feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 16, xChannelSelector: 'R', yChannelSelector: 'G' });
+  const sh = el(d, 'filter', { id: 'shadow' + id, x: '-20%', y: '-20%', width: '140%', height: '140%' });
+  el(sh, 'feDropShadow', { dx: 0, dy: 3, stdDeviation: 4, 'flood-color': '#3b2200', 'flood-opacity': .28 });
+  return id;
+}
+
+// ---- leaves --------------------------------------------------------------------------------
+// A leafy branch: a curved stem from (x, y) heading at `ang` degrees, `len` long, bending by `bend`,
+// with `n` pairs of pointed leaves that shrink toward the tip, and one leaf at the tip.
+function branch(g, id, { x, y, ang, len, bend = 0.3, n = 5, size = 60, gold = false, flip = 1, op = 1 }) {
+  const a = ang * Math.PI / 180, nx = -Math.sin(a), ny = Math.cos(a);
+  const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
+  const cx = (x + ex) / 2 + nx * len * bend * flip, cy = (y + ey) / 2 + ny * len * bend * flip;
+  const P = t => [(1 - t) ** 2 * x + 2 * (1 - t) * t * cx + t * t * ex, (1 - t) ** 2 * y + 2 * (1 - t) * t * cy + t * t * ey];
+  const T = t => { const dx = 2 * (1 - t) * (cx - x) + 2 * t * (ex - cx), dy = 2 * (1 - t) * (cy - y) + 2 * t * (ey - cy); return Math.atan2(dy, dx); };
+  const b = el(g, 'g', { opacity: op });
+  el(b, 'path', { d: `M${x},${y} Q${cx},${cy} ${ex},${ey}`, fill: 'none', stroke: `url(#gold${id})`, 'stroke-width': size * 0.07, 'stroke-linecap': 'round' });
+  const leaf = (px, py, rot, s, golden) => {
+    const L = s, W = s * 0.36;
+    const lg = el(b, 'g', { transform: `translate(${px},${py}) rotate(${rot * 180 / Math.PI})` });
+    el(lg, 'path', { d: `M0,0 C${L * .25},${-W} ${L * .7},${-W * .9} ${L},0 C${L * .7},${W * .9} ${L * .25},${W} 0,0Z`,
+                     fill: golden ? `url(#goldV${id})` : `url(#leaf${id})`, stroke: `url(#gold${id})`, 'stroke-width': Math.max(1.4, s * 0.035) });
+    el(lg, 'path', { d: `M${L * .04},0 Q${L * .5},${-W * .12} ${L * .92},0`, fill: 'none',
+                     stroke: golden ? '#9c6a1c' : css('--leaf-vein'), 'stroke-width': Math.max(1, s * 0.022), opacity: .8 });
+  };
+  for (let i = 0; i < n; i++) {
+    const t = 0.18 + 0.72 * i / Math.max(n - 1, 1);
+    const [px, py] = P(t), th = T(t), s = size * (1 - 0.45 * t);
+    leaf(px, py, th - 0.75, s, gold && i % 2 === 0);
+    leaf(px, py, th + 0.75, s * 0.95, gold && i % 2 === 1);
+  }
+  leaf(ex, ey, T(1), size * 0.6, gold);
+}
+
+function sparkle(g, x, y, r, id, op = 1) {
+  const k = r * 0.2;
+  el(g, 'path', { d: `M${x},${y - r} L${x + k},${y - k} L${x + r},${y} L${x + k},${y + k} L${x},${y + r} L${x - k},${y + k} L${x - r},${y} L${x - k},${y - k}Z`,
+                  fill: `url(#goldV${id})`, opacity: op });
+}
+
+// ---- back layer: corner foliage, gold edge rules ------------------------------------------
+const back = document.getElementById('back');
+const B = defs(back, 'b');
+(function () {
+  const g = el(back, 'g');
+  // corner sprays, mirrored left/right
+  const sprays = [
+    { x: -20, y: 22, ang: -6, len: 250, n: 5, size: 56, bend: .2, flip: 1, gold: true },
+    { x: 380, y: -40, ang: 160, len: 190, n: 4, size: 46, bend: .2, flip: 1, op: .85 },
+    { x: -30, y: 800, ang: -14, len: 230, n: 5, size: 54, bend: -.2, flip: 1, gold: true },
+    { x: 40, y: 840, ang: -62, len: 130, n: 3, size: 48, bend: .2, flip: 1 },
+    { x: 520, y: 836, ang: -160, len: 170, n: 4, size: 44, bend: -.2, flip: 1, op: .85 },
+  ];
+  for (const s of sprays) {
+    branch(g, B, s);
+    branch(g, B, { ...s, x: 1920 - s.x, ang: 180 - s.ang, flip: -s.flip });
+  }
+  // sprays hugging the oval, top and bottom
+  for (const side of [-1, 1]) {
+    branch(g, B, { x: 960 + side * 150, y: -20, ang: side < 0 ? 200 : -20, len: 260, n: 5, size: 58, bend: .18, flip: side, gold: true });
+    branch(g, B, { x: 960 + side * 120, y: 820, ang: side < 0 ? 160 : 20, len: 280, n: 5, size: 60, bend: -.18, flip: side, gold: true });
+  }
+  for (const [x, y, r] of [[300, 50, 9], [1640, 52, 10], [640, 112, 7], [1290, 40, 8], [610, 770, 8], [1330, 770, 9]])
+    sparkle(g, x, y, r, B, .85);
+  // gold rules flush with the top and bottom edges, as on the oil labels
+  for (const y of [0, 794]) el(g, 'rect', { x: 0, y, width: 1920, height: 6, fill: `url(#gold${B})` });
+})();
+
+// ---- front layer: oval, ribbon, drop, family seal ---------------------------------------
+const front = document.getElementById('front');
+const F = defs(front, 'f');
+(function () {
+  const g = el(front, 'g');
+  const CX = 960, CY = 400, RX = 298, RY = 386;
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX + 40, ry: RY + 20, fill: `url(#glow${F})` });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX, ry: RY, fill: `url(#oval${F})`, filter: `url(#shadow${F})` });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX, ry: RY, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 9 });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX - 16, ry: RY - 16, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 2.5 });
+  // little gold sprigs inside the oval, either side of the logo
+  for (const side of [-1, 1])
+    branch(g, F, { x: CX + side * 236, y: 290, ang: side < 0 ? -78 : -102, len: 170, n: 5, size: 34, bend: .12, flip: side, gold: true });
+  for (const [x, y, r] of [[CX - 170, 70, 11], [CX + 190, 96, 9], [CX + 140, 180, 6], [CX - 210, 160, 6], [CX + 222, 560, 7], [CX - 228, 548, 7]])
+    sparkle(g, x, y, r, F);
+})();
+
+// title in gold
+(function () {
+  const t = document.getElementById('titulo');
+  defs(t, 't');
+  el(t, 'text', { x: 960, y: 84, 'text-anchor': 'middle', 'font-family': 'Cinzel', 'font-weight': 800, 'font-size': 84,
+                  'letter-spacing': 3, fill: '#5a3608', opacity: .35, transform: 'translate(2,3)' }, 'VASELINA');
+  el(t, 'text', { x: 960, y: 84, 'text-anchor': 'middle', 'font-family': 'Cinzel', 'font-weight': 800, 'font-size': 84,
+                  'letter-spacing': 3, fill: 'url(#goldVt)', stroke: '#8a5a12', 'stroke-width': 1.2 }, 'VASELINA');
+})();
+
+const top_ = document.getElementById('top');
+const T = defs(top_, 'tp');
+(function () {
+  const g = el(top_, 'g');
+  // ribbon: a gentle arc whose folded tails tuck behind it
+  const y = 436, x0 = 680, x1 = 1240, sag = 18, h = 62;
+  const tail = (dir) => {
+    const xe = dir < 0 ? x0 : x1, xo = xe + dir * 50;
+    el(g, 'path', { d: `M${xe - dir * 10},${y + 14} L${xo},${y + 10} L${xo - dir * 22},${y + h / 2 + 12} L${xo},${y + h + 16} L${xe - dir * 10},${y + h + 18}Z`,
+                    fill: `url(#ribbonBack${T})`, stroke: `url(#gold${T})`, 'stroke-width': 2 });
+  };
+  tail(-1); tail(1);
+  const top = `M${x0},${y} Q960,${y + sag * 2} ${x1},${y}`;
+  const bot = `L${x1},${y + h} Q960,${y + h + sag * 2} ${x0},${y + h}Z`;
+  el(g, 'path', { d: top + bot, fill: `url(#ribbon${T})`, stroke: `url(#gold${T})`, 'stroke-width': 3.5, filter: `url(#shadow${T})` });
+  el(g, 'path', { id: 'rib', d: `M${x0},${y + h * .66} Q960,${y + h * .66 + sag * 2} ${x1},${y + h * .66}`, fill: 'none' });
+  const tx = el(g, 'text', { 'font-family': 'PT Serif', 'font-size': V.cinta.length > 16 ? 33 : 37, 'font-weight': 700,
+                              fill: css('--ribbon-ink'), 'letter-spacing': 1 });
+  el(tx, 'textPath', { href: '#rib', startOffset: '50%', 'text-anchor': 'middle' }, V.cinta);
+
+  // the drop of oil between two leafy sprigs
+  const DX = 960, DY = 662;
+  for (const side of [-1, 1]) {
+    branch(g, T, { x: DX + side * 18, y: DY + 96, ang: side < 0 ? 196 : -16, len: 150, n: 4, size: 50, bend: .25, flip: -side });
+    branch(g, T, { x: DX + side * 10, y: DY + 100, ang: side < 0 ? 228 : -48, len: 110, n: 3, size: 40, bend: .2, flip: side, gold: true });
+  }
+  const drop = `M${DX},${DY - 104} C${DX + 22},${DY - 58} ${DX + 64},${DY - 12} ${DX + 64},${DY + 34}
+                A64,64 0 1 1 ${DX - 64},${DY + 34} C${DX - 64},${DY - 12} ${DX - 22},${DY - 58} ${DX},${DY - 104}Z`;
+  el(g, 'path', { d: drop, fill: `url(#drop${T})`, stroke: css('--drop-edge'), 'stroke-width': 2.5, filter: `url(#shadow${T})` });
+  el(g, 'path', { d: `M${DX - 30},${DY + 6} C${DX - 34},${DY + 30} ${DX - 24},${DY + 56} ${DX - 2},${DY + 70}`,
+                  fill: 'none', stroke: '#fff', 'stroke-width': 9, 'stroke-linecap': 'round', opacity: .75 });
+  el(g, 'ellipse', { cx: DX - 18, cy: DY - 30, rx: 8, ry: 16, fill: '#fff', opacity: .8, transform: `rotate(28 ${DX - 18} ${DY - 30})` });
+  sparkle(g, DX + 36, DY - 40, 12, T);
+
+  // "Para toda la familia" seal, overlapping the oval's lower-left edge
+  const SX = 712, SY = 636, R = 96;
+  const sg = el(g, 'g', { filter: `url(#shadow${T})` });
+  const scallop = [];
+  for (let i = 0; i < 48; i++) {
+    const a0 = i / 48 * Math.PI * 2, a1 = (i + .5) / 48 * Math.PI * 2;
+    scallop.push(`${i ? 'L' : 'M'}${SX + Math.cos(a0) * (R + 10)},${SY + Math.sin(a0) * (R + 10)}`,
+                 `L${SX + Math.cos(a1) * (R + 4)},${SY + Math.sin(a1) * (R + 4)}`);
+  }
+  el(sg, 'path', { d: scallop.join(' ') + 'Z', fill: `url(#gold${T})` });
+  el(sg, 'circle', { cx: SX, cy: SY, r: R - 4, fill: `url(#seal${T})`, stroke: '#f6dc96', 'stroke-width': 2 });
+  el(sg, 'circle', { cx: SX, cy: SY, r: R - 13, fill: 'none', stroke: '#e9c46a', 'stroke-width': 1.6, 'stroke-dasharray': '2 5', 'stroke-linecap': 'round' });
+  el(g, 'path', { id: 'arcTop', d: `M${SX - 66},${SY + 4} A66,66 0 0 1 ${SX + 66},${SY + 4}`, fill: 'none' });
+  const t1 = el(g, 'text', { 'font-family': 'Cinzel', 'font-weight': 700, 'font-size': 19, fill: '#fbe7b5', 'letter-spacing': 2.5 });
+  el(t1, 'textPath', { href: '#arcTop', startOffset: '50%', 'text-anchor': 'middle' }, 'PARA TODA LA');
+  // family: two adults and a child
+  const fam = el(g, 'g', { fill: '#fbe7b5' });
+  const person = (x, y, s) => {
+    el(fam, 'circle', { cx: x, cy: y, r: 8.5 * s });
+    el(fam, 'path', { d: `M${x - 13 * s},${y + 37 * s} C${x - 13 * s},${y + 16 * s} ${x - 9 * s},${y + 11 * s} ${x},${y + 11 * s} C${x + 9 * s},${y + 11 * s} ${x + 13 * s},${y + 16 * s} ${x + 13 * s},${y + 37 * s}Z` });
+  };
+  person(SX - 24, SY - 18, 1); person(SX + 24, SY - 18, 1); person(SX, SY - 2, .68);
+  el(g, 'text', { x: SX, y: SY + 56, 'text-anchor': 'middle', 'font-family': 'Great Vibes', 'font-size': 44, fill: '#fbe7b5' }, 'Familia');
+  sparkle(g, SX - 70, SY - 74, 9, T); sparkle(g, SX + 82, SY - 60, 7, T);
+})();
+
+// ---- panel ornaments: dividers, "free" seals, benefits -------------------------------------
+document.querySelectorAll('[data-divider]').forEach((s, i) => {
+  const id = defs(s, 'd' + i);
+  el(s, 'path', { d: 'M98,13 L248,13', stroke: `url(#gold${id})`, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .9 });
+  el(s, 'path', { d: 'M308,13 L458,13', stroke: `url(#gold${id})`, 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .9 });
+  el(s, 'circle', { cx: 262, cy: 13, r: 3, fill: '#c8963c' });
+  el(s, 'circle', { cx: 294, cy: 13, r: 3, fill: '#c8963c' });
+  sparkle(s, 278, 13, 12, id);
+});
+
+(function () {
+  const box = document.getElementById('free');
+  const seals = [
+    ['PARABEN', 'FREE', 'leaf'], ['SILICONE', 'FREE', 'flask'], ['CRUELTY', 'FREE', 'bunny'], ['SULFATE', 'FREE', 'bubbles'],
+  ];
+  seals.forEach(([a, b, icon], i) => {
+    const s = el(box, 'svg', { viewBox: '0 0 86 86' });
+    const id = defs(s, 'fr' + i);
+    el(s, 'circle', { cx: 43, cy: 43, r: 40, fill: css('--qr-card'), stroke: `url(#gold${id})`, 'stroke-width': 4 });
+    el(s, 'circle', { cx: 43, cy: 43, r: 33.5, fill: 'none', stroke: css('--accent'), 'stroke-width': 1.2, opacity: .6 });
+    const ic = el(s, 'g', { fill: 'none', stroke: css('--accent-dark'), 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    if (icon === 'leaf') { el(ic, 'path', { d: 'M33,44 C34,30 42,22 54,20 C53,33 46,41 35,42' }); el(ic, 'path', { d: 'M33,46 C38,38 43,33 49,27' }); }
+    if (icon === 'flask') { el(ic, 'path', { d: 'M38,19 h10 M40,19 v9 l-9,15 a3,3 0 0 0 3,4 h18 a3,3 0 0 0 3,-4 l-9,-15 v-9' }); el(ic, 'path', { d: 'M34,38 h18' }); }
+    if (icon === 'bunny') {
+      el(ic, 'path', { d: 'M38,32 C34,22 35,16 38,16 C41,16 42,24 41,31 M47,31 C47,23 49,16 52,17 C55,18 53,25 49,32' });
+      el(ic, 'path', { d: 'M36,42 a9,8 0 1 1 18,0 a9,8 0 1 1 -18,0' }); el(ic, 'circle', { cx: 41.5, cy: 40, r: .8, fill: css('--accent-dark') });
+    }
+    if (icon === 'bubbles') { el(ic, 'circle', { cx: 38, cy: 36, r: 8 }); el(ic, 'circle', { cx: 51, cy: 28, r: 5 }); el(ic, 'circle', { cx: 51, cy: 42, r: 4 }); }
+    el(s, 'text', { x: 43, y: 58, 'text-anchor': 'middle', 'font-family': 'PT Serif', 'font-weight': 700, 'font-size': 9.6, fill: css('--accent-dark'), 'letter-spacing': .2 }, a);
+    el(s, 'text', { x: 43, y: 68, 'text-anchor': 'middle', 'font-family': 'PT Serif', 'font-weight': 700, 'font-size': 9.6, fill: css('--accent-dark') }, b);
+  });
+})();
+
+(function () {
+  const box = document.getElementById('beneficios');
+  const items = [
+    ['Sella la hidratación', 'drop'], ['Suaviza', 'feather'], ['Aporta brillo', 'shine'], ['Facilita el peinado', 'comb'],
+  ];
+  items.forEach(([label, icon], i) => {
+    const d = document.createElement('div'); d.className = 'b'; box.appendChild(d);
+    const s = el(d, 'svg', { viewBox: '0 0 78 78' });
+    const id = defs(s, 'bn' + i);
+    el(s, 'circle', { cx: 39, cy: 39, r: 36, fill: `url(#seal${id})`, stroke: `url(#gold${id})`, 'stroke-width': 3.5 });
+    const ic = el(s, 'g', { fill: 'none', stroke: '#fbe7b5', 'stroke-width': 2.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    if (icon === 'drop') { el(ic, 'path', { d: 'M39,18 C44,27 51,34 51,43 a12,12 0 0 1 -24,0 C27,34 34,27 39,18Z' }); el(ic, 'path', { d: 'M33,44 l4,4 l8,-9' }); }
+    if (icon === 'feather') { el(ic, 'path', { d: 'M24,55 C30,40 40,26 55,20 C55,36 46,47 31,50' }); el(ic, 'path', { d: 'M27,53 L46,32 M34,46 h9 M39,40 h8' }); }
+    if (icon === 'shine') {
+      el(ic, 'path', { d: 'M39,19 L42.5,35.5 L59,39 L42.5,42.5 L39,59 L35.5,42.5 L19,39 L35.5,35.5Z', fill: '#fbe7b5', stroke: 'none' });
+      el(ic, 'path', { d: 'M54,22 l0,6 M51,25 l6,0 M24,52 l0,5 M21.5,54.5 l5,0' });
+    }
+    if (icon === 'comb') {
+      el(ic, 'path', { d: 'M22,33 h34 a3,3 0 0 1 3,3 v3 h-40 v-3 a3,3 0 0 1 3,-3Z', fill: '#fbe7b5' });
+      for (let x = 23; x <= 56; x += 4.6) el(ic, 'path', { d: `M${x},39 v${x < 40 ? 14 : 10}` });
+    }
+    const sp = document.createElement('span'); sp.textContent = label; d.appendChild(sp);
+  });
+})();
+
+// Justified copy without hyphens: each paragraph gets the type size (within 0.5 px of the design size, or data-range)
+// and letter spacing (within 0.4 px) whose line breaks leave the evenest, narrowest word gaps.
+function justify(p) {
+  const words = p.textContent.trim().split(/\s+/);
+  p.innerHTML = words.map(w => `<span>${w}</span>`).join(' ');
+  const spans = [...p.children], base = parseFloat(getComputedStyle(p).fontSize), W = p.clientWidth;
+  p.style.textAlign = 'left';
+  let best = null;
+  const range = +(p.dataset.range || 0.5);
+  for (let ds = -range; ds <= range + .001; ds += 0.125) for (let ls = -0.4; ls <= 0.401; ls += 0.1) {
+    p.style.fontSize = (base + ds) + 'px'; p.style.letterSpacing = ls + 'px';
+    const lines = [];
+    for (const sp of spans) {
+      const r = sp.getBoundingClientRect();
+      const last = lines[lines.length - 1];
+      if (last && Math.abs(last.top - r.top) < 4) { last.right = r.right; last.n++; } else lines.push({ top: r.top, left: r.left, right: r.right, n: 1 });
+    }
+    const space = (base + ds) * 0.27;
+    let cost = Math.abs(ds) * 2 + Math.max(0, -ls) * 6;               // stay near the design size
+    lines.forEach((l, i) => {
+      const slack = W - (l.right - l.left);
+      if (i === lines.length - 1) cost += slack > W * 0.65 ? 40 : 0;          // no lonely last word
+      else cost += l.n > 1 ? (slack / (l.n - 1) / space) ** 2 * (l.n - 1) : 50;
+    });
+    if (!best || cost < best.cost) best = { cost, ds, ls };
+  }
+  p.style.fontSize = (base + best.ds) + 'px'; p.style.letterSpacing = best.ls + 'px'; p.style.textAlign = '';
+}
+// (measured once the fonts are in; render.js waits on window.listo)
+window.listo = document.fonts.ready.then(() => document.querySelectorAll('.body').forEach(justify));
+
+// "Harmonieproducts" on a brush stroke, between the two codes
+(function () {
+  const s = document.getElementById('handle');
+  const id = defs(s, 'h');
+  el(s, 'path', { d: 'M6,30 C40,20 120,16 236,22 L232,70 C150,78 70,76 2,66 Z', fill: `url(#brush${id})`, filter: `url(#rough${id})` });
+  el(s, 'path', { d: 'M24,26 C80,20 160,19 226,24', stroke: '#fff', 'stroke-width': 2, opacity: .18, fill: 'none', filter: `url(#rough${id})` });
+  el(s, 'text', { x: 120, y: 54, 'text-anchor': 'middle', 'font-family': 'PT Serif', 'font-weight': 700, 'font-size': 21, fill: '#fbe7b5' }, 'Harmonieproducts');
+  el(s, 'text', { x: 120, y: 8, 'text-anchor': 'middle', 'font-family': 'Great Vibes', 'font-size': 30, fill: css('--accent-dark') }, 'Síguenos');
+})();
+</script>
+</body>
+</html>
