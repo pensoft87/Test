@@ -1,4 +1,4 @@
-"""Second pass over the flyer: real logo, backdrop behind the bottles, and the
+"""Second pass over the flyer: real logo, watercolor wash behind the bottles, and the
 'Precio de introducción' seal.  Runs build.py first, so the whole flyer is:
 
     python3 decor.py            # -> flyer-harmonie.png
@@ -66,9 +66,13 @@ alpha *= np.array(keep.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
 alpha[alpha < 0.06] = 0
 alpha = cv2.GaussianBlur(alpha, (0, 0), 0.5)
 
-scale = 0.6
+# trim to the logo's own bounding box, then size it to the space above the headline and
+# line its left edge up with the "P" of PEINA (x=80; the headline starts at y=257)
+ys, xs = np.where(alpha > 0.05)
+crop, fgc, alpha = (v[ys.min():ys.max() + 1, xs.min():xs.max() + 1] for v in (crop, fgc, alpha))
+oy, bottom, ox = 6, 243, 80
+scale = (bottom - oy) / crop.shape[0]
 nw, nh = int(crop.shape[1] * scale), int(crop.shape[0] * scale)
-ox, oy = 278 - nw // 2, 14
 dst = flyer[oy:oy + nh, ox:ox + nw].astype(np.float32)
 a_s = cv2.resize(alpha, (nw, nh), interpolation=cv2.INTER_AREA)[..., None]
 prem = cv2.resize(fgc * alpha[..., None], (nw, nh), interpolation=cv2.INTER_AREA)
@@ -137,106 +141,68 @@ def half_width(y):
 def bottle_mask():
     def draw(d, s):
         for cx in CXS:
-            for yy in range(620 * s, 1064 * s):
-                hw = half_width(yy / s) - 0.6
+            for yy in range(627 * s, 1064 * s):
+                hw = half_width(yy / s) - 3.0
                 if hw > 0:
                     d.line([((cx - hw) * s, yy), ((cx + hw) * s, yy)], fill=255)
     return mask((Wd, H), draw)
 
 
 bmask = bottle_mask()
+# the source render has a pale rim around the glass (old background bleeding in): along the
+# edge of the amber glass (shoulders and base, not the cap or label) drop light pixels
+ring = (bmask > 0) & (cv2.erode((bmask > 0.99).astype(np.uint8), np.ones((9, 9), np.uint8)) == 0)
+glass = ((YY > 741) & (YY < 802)) | (YY > 1039)
+lum = bottles_ref.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
+bmask = np.where(ring & glass, bmask * np.clip((190 - lum) / 50, 0, 1), bmask)
 
-# ---------------------------------------------------------------- 3. backdrop behind the bottles
+# ---------------------------------------------------------------- 3. watercolor wash behind the bottles
 rng = np.random.default_rng(7)
 SHELF = 1037
-AR, ATOP = 101, 666                        # arch half-width and top
-tints = [((252, 242, 255), (211, 186, 233)),   # lavender  - nutritivo
-         ((255, 249, 238), (236, 213, 178)),   # champagne - protección
-         ((247, 235, 252), (196, 164, 222)),   # violet    - fortalecimiento
-         ((255, 247, 224), (230, 197, 132))]   # gold      - intensivo
 
 
-def arch_draw(cx, inset=0.0, width=0):
-    def draw(d, s):
-        r = AR - inset
-        top = ATOP + inset
-        box = [(cx - r) * s, top * s, (cx + r) * s, (top + 2 * r) * s]
-        if width:
-            d.arc(box, 180, 360, fill=255, width=int(width * s))
-            d.line([((cx - r) * s + width * s / 2, (top + r) * s), ((cx - r) * s + width * s / 2, SHELF * s)], fill=255, width=int(width * s))
-            d.line([((cx + r) * s - width * s / 2, (top + r) * s), ((cx + r) * s - width * s / 2, SHELF * s)], fill=255, width=int(width * s))
-        else:
-            d.pieslice(box, 180, 360, fill=255)
-            d.rectangle([(cx - r) * s, (top + r) * s, (cx + r) * s, SHELF * s], fill=255)
-    return draw
+def noise(sigma, seed):
+    """Smooth value noise in roughly [-1, 1]."""
+    n = cv2.GaussianBlur(np.random.default_rng(seed).standard_normal((H, Wd)).astype(np.float32), (0, 0), sigma)
+    return n / (n.std() * 2.5)
 
 
-# soft drop shadow of the arches
-sh = sum(mask((Wd, H), arch_draw(cx)) for cx in CXS)
-sh = cv2.GaussianBlur(np.roll(sh, (6, 3), (0, 1)), (0, 0), 7)
-sh[SHELF:] = 0
-comp(flyer, np.zeros((H, Wd, 3), np.float32) + (40, 10, 40), np.clip(sh, 0, 1) * 0.35)
-
-gold_v = lerp(GOLD_HI, GOLD_LO, np.clip((YY - ATOP) / (SHELF - ATOP), 0, 1))
-for cx, (t0, t1) in zip(CXS, tints):
-    a = mask((Wd, H), arch_draw(cx))
-    t = np.clip((YY - ATOP) / (SHELF - ATOP), 0, 1)
-    fillc = lerp(t0, t1, t ** 0.9)
-    glow = np.exp(-(((XX - cx) / 95) ** 2 + ((YY - 905) / 150) ** 2))
-    fillc = fillc * (1 - 0.55 * glow[..., None]) + np.array([255, 252, 246]) * 0.55 * glow[..., None]
-    comp(flyer, fillc, a * 0.96)
-    # faint diagonal sheen
-    sheen = np.clip(1 - np.abs((XX - cx) + 0.5 * (YY - 800) + 30) / 22, 0, 1) * a * 0.18
-    comp(flyer, np.full((H, Wd, 3), 255, np.float32), sheen)
-    comp(flyer, gold_v, mask((Wd, H), arch_draw(cx, 0, 3)))
-    comp(flyer, gold_v, mask((Wd, H), arch_draw(cx, 7, 1)) * 0.75)
-    # keystone ornament at the top of the arch
-    comp(flyer, gold_v, mask((Wd, H), lambda d, s, cx=cx: d.polygon(
-        [(x * s, y * s) for x, y in star_pts(cx, ATOP, 11, 3.2, 4)], fill=255)))
-
-# lavender sprigs growing from the shelf between the arches (drawn on an RGBA layer)
-def sprig(d, s, x0, lean, height, rng):
-    path = [(x0 + lean * (k / 39) ** 2, SHELF - height * k / 39) for k in range(40)]
-    d.line([(x * s, y * s) for x, y in path], fill=(92, 112, 78, 255), width=int(1.3 * s))
-    for side in (-1, 1):                                  # slim leaves near the base
-        lx, ly = path[3]
-        leaf = [(lx, ly), (lx + side * 7, ly - 12), (lx + side * 11, ly - 30), (lx + side * 3, ly - 14)]
-        d.polygon([(x * s, y * s) for x, y in leaf], fill=(118, 146, 104, 255))
-    n = 26
-    for k in range(n):                                    # buds, bottom to top, getting smaller
-        t = 0.42 + 0.58 * k / (n - 1)
-        bx, by = x0 + lean * t * t, SHELF - height * t
-        sz = 2.9 - 1.3 * (t - 0.42) / 0.58
-        off = (1 if k % 2 else -1) * sz * rng.uniform(0.6, 1.1)
-        base = np.array(lerp((118, 66, 176), (176, 128, 228), rng.uniform(0, 1)))
-        for dx, dy, f in ((0, 0, 1.0), (-0.35, -0.5, 1.25)):   # body + highlight
-            col = tuple(int(v) for v in np.clip(base * f, 0, 255)) + (255,)
-            r = sz * (1 if f == 1.0 else 0.45)
-            cx_, cy_ = bx + off + dx * sz, by + dy * sz
-            d.ellipse([(cx_ - r) * s, (cy_ - r * 1.35) * s, (cx_ + r) * s, (cy_ + r * 1.35) * s], fill=col)
+def fbm(seed, sigmas=(60, 28, 12, 5), weights=(1, 0.5, 0.25, 0.12)):
+    return sum(w * noise(sg, seed + k) for k, (sg, w) in enumerate(zip(sigmas, weights)))
 
 
-spr = Image.new('RGBA', (Wd * SS, H * SS), (0, 0, 0, 0))
-dd = ImageDraw.Draw(spr)
-gaps = [CXS[0] - 104, (CXS[0] + CXS[1]) / 2, (CXS[1] + CXS[2]) / 2, (CXS[2] + CXS[3]) / 2, CXS[3] + 104]
-for gx in gaps:
-    for dx, lean, hgt in ((-5, -22, 112), (0, 3, 136), (5, 24, 104)):
-        sprig(dd, SS, gx + dx, lean, hgt + rng.uniform(-8, 8), rng)
-spr = np.array(spr.resize((Wd, H), Image.LANCZOS), np.float32)
-comp(flyer, spr[..., :3], spr[..., 3] / 255)
+def wash(cx, cy, rx, ry, seed, warp=0.28, edge=0.045):
+    """Pigment density of one watercolor blot: ragged edge, darker rim, uneven fill."""
+    d = np.sqrt(((XX - cx) / rx) ** 2 + ((YY - cy) / ry) ** 2) + warp * fbm(seed)
+    inside = np.clip((1 - d) / 0.012, 0, 1)                       # crisp-but-soft paper edge
+    rim = np.exp(-np.clip(1 - d, 0, None) / edge) * 0.55             # pigment pooled at the edge
+    body = 0.32 + 0.16 * noise(18, seed + 9) + 0.10 * noise(4, seed + 11)
+    return inside * np.clip(body + rim, 0, 1)
 
-# golden sparkles and bokeh around the display
-for _ in range(70):
-    x, y = rng.uniform(70, 1050), rng.uniform(620, 1030)
-    r = rng.uniform(2, 6)
+
+grain = 0.86 + 0.14 * noise(0.8, 99) + 0.06 * noise(2.5, 98)       # paper granulation
+grain *= (YY < SHELF)                                                 # paint stops at the shelf
+pigments = [(176, 132, 220), (226, 146, 196), (150, 104, 206), (222, 176, 104)]
+WC_Y = 870
+# one broad pale wash tying the row together, then a blot behind each bottle (offset like a shadow)
+broad = wash(572, 905, 520, 200, 1, warp=0.18, edge=0.06) * 0.55
+comp(flyer, np.full((H, Wd, 3), (198, 166, 228), np.float32), np.clip(broad * grain, 0, 1) * 0.75)
+for k, (cx, col) in enumerate(zip(CXS, pigments)):
+    dens = wash(cx + 16, WC_Y + rng.uniform(-15, 15), 118, 205, 20 + 7 * k)
+    comp(flyer, np.full((H, Wd, 3), col, np.float32), np.clip(dens * grain, 0, 1) * 0.85)
+    # second, smaller glaze that does not quite line up — gives the layered watercolor look
+    dens2 = wash(cx - 20, WC_Y + 60, 84, 150, 60 + 7 * k, warp=0.35, edge=0.035)
+    darker = tuple(int(v * 0.82) for v in col)
+    comp(flyer, np.full((H, Wd, 3), darker, np.float32), np.clip(dens2 * grain, 0, 1) * 0.45)
+
+# a few splatter drops
+for _ in range(38):
+    k = rng.integers(0, 4)
+    x = CXS[k] + rng.normal(0, 95)
+    y = min(WC_Y + rng.normal(-40, 130), SHELF - 8)
+    r = rng.choice([1.2, 1.8, 2.5, 3.5], p=[0.4, 0.3, 0.2, 0.1])
     a = mask((Wd, H), lambda d, s, x=x, y=y, r=r: d.ellipse([(x - r) * s, (y - r) * s, (x + r) * s, (y + r) * s], fill=255))
-    comp(flyer, np.full((H, Wd, 3), (255, 236, 190), np.float32), cv2.GaussianBlur(a, (0, 0), 1.2) * rng.uniform(0.25, 0.6))
-for _ in range(26):
-    x, y = rng.uniform(80, 1045), rng.uniform(630, 1020)
-    r = rng.uniform(4, 10)
-    a = mask((Wd, H), lambda d, s, x=x, y=y, r=r: d.polygon([(px * s, py * s) for px, py in star_pts(x, y, r, r * 0.22, 4)], fill=255))
-    comp(flyer, np.full((H, Wd, 3), (255, 230, 160), np.float32), a * 0.95)
-    comp(flyer, np.full((H, Wd, 3), (255, 240, 200), np.float32), cv2.GaussianBlur(a, (0, 0), r * 0.6) * 0.5)
+    comp(flyer, np.full((H, Wd, 3), pigments[k], np.float32), a * rng.uniform(0.45, 0.8))
 
 # contact shadows on the shelf
 shadow = np.zeros((H, Wd), np.float32)
