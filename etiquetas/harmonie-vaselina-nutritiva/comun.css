@@ -1,0 +1,34 @@
+/* Shared by etiqueta.html (6 x 2.5 in label) and muestra.html (2.3 x 1.5 in sample sachet). */
+  @font-face { font-family: 'PT Serif'; src: url(fonts/PTSerif-Regular.ttf); font-weight: 400; }
+  @font-face { font-family: 'PT Serif'; src: url(fonts/PTSerif-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-Bold.ttf); font-weight: 700; }
+  @font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-ExtraBold.ttf); font-weight: 800; }
+  @font-face { font-family: 'Great Vibes'; src: url(fonts/GreatVibes-Regular.ttf); }
+
+  /* ---- palettes ------------------------------------------------------------------------- */
+  .sin-fragancia {
+    --bg-in: #fffdf6; --bg-mid: #fbf3e4; --bg-out: #eadcf0;
+    --ink: #2c1838; --ink-soft: #4a2f5c;
+    --pill-a: #e9dcf4; --pill-b: #cdb3e3; --pill-ink: #3d1f5c; --pill-icon: #5b2d86;
+    --accent: #6b3a9a; --accent-dark: #3d1f5c;
+    --ribbon-a: #c9aee2; --ribbon-b: #9a74c4; --ribbon-c: #7d58aa; --ribbon-ink: #ffffff;
+    --leaf-a: #e7d8f3; --leaf-b: #b597d6; --leaf-vein: #8a64b5;
+    --oval-in: #fffef9; --oval-out: #f8eedb;
+    --seal-a: #6b3a9a; --seal-b: #3d1f5c;
+    --brush-a: #5b2d86; --brush-b: #3a1857;
+    --qr-card: #fffaf0;
+    --drop-a: #fffaf0; --drop-b: #f6e7b8; --drop-c: #d9b45c; --drop-edge: #b8862e;
+  }
+  .batana {                       /* ivory, deep plum and gold, like the "fortalecimiento capilar" oil */
+    --bg-in: #fdfcf3; --bg-mid: #fdf4e4; --bg-out: #f6e6c8;
+    --ink: #24141c; --ink-soft: #3a2030;
+    --pill-a: #6a1272; --pill-b: #35074a; --pill-ink: #fdf1dc; --pill-icon: #55085b;
+    --accent: #682979; --accent-dark: #4a0c5a;
+    --ribbon-a: #7e3f93; --ribbon-b: #5a1a6e; --ribbon-c: #35074a; --ribbon-ink: #fdf1dc;
+    --leaf-a: #c39ad4; --leaf-b: #6e2f88; --leaf-vein: #4a1260;
+    --oval-in: #fffef8; --oval-out: #f9edd6;
+    --seal-a: #6a1272; --seal-b: #35074a;
+    --brush-a: #55085b; --brush-b: #380a43;
+    --qr-card: #fffdf6;
+    --drop-a: #fff4c2; --drop-b: #f6bf24; --drop-c: #b07a06; --drop-edge: #8a5a04;
+  }

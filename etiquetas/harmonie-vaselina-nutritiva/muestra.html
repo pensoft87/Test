@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Muestra Vaselina Nutritiva</title>
+<!--
+  Harmonie · Vaselina nutritiva — etiqueta del sobrecito de muestra, 2.3 x 1.5 in.
+  Se diseña a 920 x 600 px (400 ppi) y se exporta a 600 ppi. La variante se elige con el hash:
+  #sin-fragancia o #batana. render.js la exporta a PNG y a PDF vectorial.
+-->
+<link rel="stylesheet" href="comun.css">
+<style>
+  @page { size: 2.3in 1.5in; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 920px; height: 600px; overflow: hidden; background: #fff; }
+  #label {
+    position: relative; width: 920px; height: 600px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 380px 380px at 240px 300px, var(--bg-in) 0%, var(--bg-mid) 60%, transparent 100%),
+      radial-gradient(ellipse 760px 520px at 460px 300px, var(--bg-mid) 30%, var(--bg-out) 100%);
+    font-family: 'PT Serif', serif; color: var(--ink);
+  }
+  svg.layer { position: absolute; left: 0; top: 0; width: 920px; height: 600px; }
+  .abs { position: absolute; }
+
+  .logo { left: 240px; top: 30px; width: 262px; transform: translateX(-50%); }
+  .titulo { left: 40px; width: 400px; top: 196px; text-align: center; }
+  .sub { left: 40px; width: 400px; top: 252px; display: flex; justify-content: center; align-items: center; gap: 8px;
+    font-family: 'Cinzel'; font-weight: 700; font-size: 17px; letter-spacing: 5px; color: var(--accent-dark); }
+  .sub i { display: block; width: 34px; height: 1.5px; background: linear-gradient(90deg, transparent, #c8963c, transparent); }
+
+  .col { left: 478px; width: 412px; top: 34px; height: 366px; display: flex; flex-direction: column; align-items: flex-start; }
+  .beneficios { margin-top: auto; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .beneficios .b svg { width: 56px; height: 56px; display: block; margin: 0 auto 4px; }
+  .beneficios .b span { font-size: 16px; line-height: 1.1; display: block; color: var(--ink); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 18px 0 5px; border-radius: 17px;
+    background: linear-gradient(180deg, var(--pill-a), var(--pill-b));
+    box-shadow: 0 0 0 1.8px #d9ae55, 0 2px 5px rgba(60, 30, 0, .16); font-size: 20px; color: var(--pill-ink);
+  }
+  .pill .ico { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 35% 30%, #fff9e6, #efd391 60%, #c8963c); }
+  .pill .ico svg { width: 17px; height: 17px; }
+  .body { align-self: stretch; margin: 7px 0 0; font-size: 19px; line-height: 1.26; text-align: justify; hyphens: none; text-align-last: left; color: var(--ink); }
+  .gap { height: 14px; }
+
+  .pie { left: 478px; width: 412px; top: 418px; display: flex; gap: 14px; align-items: center; }
+  .card { width: 159px; height: 159px; padding: 7px; background: var(--qr-card); border-radius: 7px; flex: none;
+          box-shadow: 0 0 0 1.8px #d9ae55, 0 2px 5px rgba(60, 30, 0, .16); }
+  .card img { width: 145px; height: 145px; display: block; image-rendering: pixelated; }   /* 29 modules x 5 px */
+  .redes { flex: 1; }
+  .redes .free { display: flex; gap: 6px; margin-bottom: 8px; }
+  .redes .free svg { width: 54px; height: 54px; }
+  .redes small { display: block; font-size: 15px; color: var(--ink-soft); }
+  .redes b { display: block; font-size: 20px; color: var(--accent-dark); }
+</style>
+</head>
+<body>
+<div id="label">
+  <svg class="layer" id="front" viewBox="0 0 920 600"></svg>
+  <img class="abs logo" src="assets/logo-harmonie.png" alt="Harmonie">
+  <div class="abs titulo"><svg width="400" height="60" viewBox="0 0 400 60" id="titulo"></svg></div>
+  <div class="abs sub"><i></i><span>NUTRITIVA</span><i></i></div>
+
+  <div class="abs col">
+    <div class="pill"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 19c1-7 5-12 14-14-1 9-6 13-12 13" fill="none" stroke="var(--pill-icon)" stroke-width="2.4" stroke-linecap="round"/><path d="M5 19c3-4 6-7 10-10" fill="none" stroke="var(--pill-icon)" stroke-width="2.2" stroke-linecap="round"/></svg></span>Ingredientes</div>
+    <p class="body" id="ingredientes"></p>
+    <div class="gap"></div>
+    <div class="pill"><span class="ico"><svg viewBox="0 0 24 24"><g fill="none" stroke="var(--pill-icon)" stroke-width="2.3"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M5.5 18.5l1.9-1.9M16.6 7.4l1.9-1.9"/><circle cx="12" cy="12" r="6.6"/></g></svg></span>Modo de uso</div>
+    <p class="body" id="modo"></p>
+    <div class="beneficios" id="beneficios"></div>
+  </div>
+
+  <div class="abs pie">
+    <div class="card"><img src="assets/qr-instagram.svg" alt=""></div>
+    <div class="redes">
+      <div class="free" id="free"></div>
+      <small>Escanéame y síguenos en Instagram</small>
+      <b>@harmonieproducts</b>
+    </div>
+  </div>
+  <svg class="layer" id="top" viewBox="0 0 920 600"></svg>
+</div>
+
+<script src="comun.js"></script>
+<script>
+const key = (location.hash || '#sin-fragancia').slice(1);
+const V = VARIANTES[key];
+document.getElementById('label').className = key;
+document.getElementById('ingredientes').textContent = V.ingredientes;
+document.getElementById('modo').textContent = MODO;
+
+// ---- the oval, as on the big label, scaled to the sachet
+const front = document.getElementById('front');
+const F = defs(front, 'f');
+(function () {
+  const g = el(front, 'g');
+  for (const y of [0, 595]) el(g, 'rect', { x: 0, y, width: 920, height: 5, fill: `url(#gold${F})` });
+  const CX = 240, CY = 300, RX = 200, RY = 282;
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX + 26, ry: RY + 14, fill: `url(#glow${F})` });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX, ry: RY, fill: `url(#oval${F})`, filter: `url(#shadow${F})` });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX, ry: RY, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 6 });
+  el(g, 'ellipse', { cx: CX, cy: CY, rx: RX - 11, ry: RY - 11, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 1.8 });
+  for (const side of [-1, 1])
+    branch(g, F, { x: CX + side * 158, y: 210, ang: side < 0 ? -78 : -102, len: 116, n: 5, size: 23, bend: .12, flip: side, gold: true });
+  for (const [x, y, r] of [[CX - 118, 52, 8], [CX + 128, 70, 6], [CX + 150, 400, 5]]) sparkle(g, x, y, r, F);
+  // "Muestra gratis" seal over the oval's top right edge
+  const MX = 418, MY = 78, R = 52;
+  const sg = el(g, 'g', { filter: `url(#shadow${F})` });
+  el(sg, 'circle', { cx: MX, cy: MY, r: R + 5, fill: `url(#gold${F})` });
+  el(sg, 'circle', { cx: MX, cy: MY, r: R, fill: `url(#seal${F})` });
+  el(g, 'circle', { cx: MX, cy: MY, r: R - 7, fill: 'none', stroke: '#e9c46a', 'stroke-width': 1.2, 'stroke-dasharray': '2 4', 'stroke-linecap': 'round' });
+  el(g, 'text', { x: MX, y: MY - 6, 'text-anchor': 'middle', 'font-family': 'PT Serif', 'font-weight': 700, 'font-size': 13, fill: '#fbe7b5', 'letter-spacing': 1 }, 'MUESTRA');
+  el(g, 'text', { x: MX, y: MY + 18, 'text-anchor': 'middle', 'font-family': 'Cinzel', 'font-weight': 800, 'font-size': 19, fill: '#fbe7b5', 'letter-spacing': .3 }, 'GRATIS');
+})();
+
+(function () {
+  const t = document.getElementById('titulo');
+  defs(t, 't');
+  const a = { x: 200, y: 52, 'text-anchor': 'middle', 'font-family': 'Cinzel', 'font-weight': 800, 'font-size': 54, 'letter-spacing': 2 };
+  el(t, 'text', { ...a, fill: '#5a3608', opacity: .35, transform: 'translate(1.5,2)' }, 'VASELINA');
+  el(t, 'text', { ...a, fill: 'url(#goldVt)', stroke: '#8a5a12', 'stroke-width': .9 }, 'VASELINA');
+})();
+
+const top_ = document.getElementById('top');
+const T = defs(top_, 'tp');
+(function () {
+  const g = el(top_, 'g');
+  // ribbon with the variant's name
+  const y = 284, x0 = 70, x1 = 410, sag = 10, h = 40;
+  for (const dir of [-1, 1]) {
+    const xe = dir < 0 ? x0 : x1, xo = xe + dir * 30;
+    el(g, 'path', { d: `M${xe - dir * 6},${y + 9} L${xo},${y + 6} L${xo - dir * 14},${y + h / 2 + 8} L${xo},${y + h + 10} L${xe - dir * 6},${y + h + 12}Z`,
+                    fill: `url(#ribbonBack${T})`, stroke: `url(#gold${T})`, 'stroke-width': 1.4 });
+  }
+  el(g, 'path', { d: `M${x0},${y} Q240,${y + sag * 2} ${x1},${y} L${x1},${y + h} Q240,${y + h + sag * 2} ${x0},${y + h}Z`,
+                  fill: `url(#ribbon${T})`, stroke: `url(#gold${T})`, 'stroke-width': 2.4, filter: `url(#shadow${T})` });
+  el(g, 'path', { id: 'rib', d: `M${x0},${y + h * .68} Q240,${y + h * .68 + sag * 2} ${x1},${y + h * .68}`, fill: 'none' });
+  const tx = el(g, 'text', { 'font-family': 'PT Serif', 'font-size': V.cinta.length > 16 ? 21 : 24, 'font-weight': 700, fill: css('--ribbon-ink'), 'letter-spacing': .6 });
+  el(tx, 'textPath', { href: '#rib', startOffset: '50%', 'text-anchor': 'middle' }, V.cinta);
+  const tl = el(g, 'text', { x: 240, y: 362, 'text-anchor': 'middle', 'font-family': 'PT Serif', 'font-weight': 700, 'font-size': 16, fill: css('--accent-dark') });
+  ['Nutre', ' • ', 'Suaviza', ' • ', 'Da brillo'].forEach((w, i) => el(tl, 'tspan', i % 2 ? { fill: '#c8963c' } : {}, w));
+
+  // the drop between leafy sprigs
+  const DX = 240, DY = 452;
+  for (const side of [-1, 1]) {
+    branch(g, T, { x: DX + side * 12, y: DY + 62, ang: side < 0 ? 196 : -16, len: 96, n: 4, size: 32, bend: .25, flip: -side });
+    branch(g, T, { x: DX + side * 7, y: DY + 64, ang: side < 0 ? 228 : -48, len: 70, n: 3, size: 26, bend: .2, flip: side, gold: true });
+  }
+  const k = .62;
+  const drop = `M${DX},${DY - 104 * k} C${DX + 22 * k},${DY - 58 * k} ${DX + 64 * k},${DY - 12 * k} ${DX + 64 * k},${DY + 34 * k}
+                A${64 * k},${64 * k} 0 1 1 ${DX - 64 * k},${DY + 34 * k} C${DX - 64 * k},${DY - 12 * k} ${DX - 22 * k},${DY - 58 * k} ${DX},${DY - 104 * k}Z`;
+  el(g, 'path', { d: drop, fill: `url(#drop${T})`, stroke: css('--drop-edge'), 'stroke-width': 1.8, filter: `url(#shadow${T})` });
+  el(g, 'path', { d: `M${DX - 19},${DY + 4} C${DX - 21},${DY + 19} ${DX - 15},${DY + 35} ${DX - 1},${DY + 43}`, fill: 'none', stroke: '#fff', 'stroke-width': 5.5, 'stroke-linecap': 'round', opacity: .75 });
+  el(g, 'ellipse', { cx: DX - 11, cy: DY - 18, rx: 5, ry: 10, fill: '#fff', opacity: .8, transform: `rotate(28 ${DX - 11} ${DY - 18})` });
+
+  // "Para toda la familia" seal, over the oval's lower-left edge
+  const SX = 70, SY = 470, R = 58;
+  const sg = el(g, 'g', { filter: `url(#shadow${T})` });
+  const sc = [];
+  for (let i = 0; i < 40; i++) {
+    const a0 = i / 40 * Math.PI * 2, a1 = (i + .5) / 40 * Math.PI * 2;
+    sc.push(`${i ? 'L' : 'M'}${SX + Math.cos(a0) * (R + 6)},${SY + Math.sin(a0) * (R + 6)}`, `L${SX + Math.cos(a1) * (R + 2.5)},${SY + Math.sin(a1) * (R + 2.5)}`);
+  }
+  el(sg, 'path', { d: sc.join(' ') + 'Z', fill: `url(#gold${T})` });
+  el(sg, 'circle', { cx: SX, cy: SY, r: R - 2, fill: `url(#seal${T})`, stroke: '#f6dc96', 'stroke-width': 1.4 });
+  el(g, 'path', { id: 'arcTop', d: `M${SX - 41},${SY + 3} A41,41 0 0 1 ${SX + 41},${SY + 3}`, fill: 'none' });
+  const t1 = el(g, 'text', { 'font-family': 'Cinzel', 'font-weight': 700, 'font-size': 12, fill: '#fbe7b5', 'letter-spacing': 1.4 });
+  el(t1, 'textPath', { href: '#arcTop', startOffset: '50%', 'text-anchor': 'middle' }, 'PARA TODA LA');
+  const fam = el(g, 'g', { fill: '#fbe7b5' });
+  const person = (x, y, s) => {
+    el(fam, 'circle', { cx: x, cy: y, r: 8.5 * s });
+    el(fam, 'path', { d: `M${x - 13 * s},${y + 37 * s} C${x - 13 * s},${y + 16 * s} ${x - 9 * s},${y + 11 * s} ${x},${y + 11 * s} C${x + 9 * s},${y + 11 * s} ${x + 13 * s},${y + 16 * s} ${x + 13 * s},${y + 37 * s}Z` });
+  };
+  person(SX - 15, SY - 12, .62); person(SX + 15, SY - 12, .62); person(SX, SY - 2, .42);
+  el(g, 'text', { x: SX, y: SY + 34, 'text-anchor': 'middle', 'font-family': 'Great Vibes', 'font-size': 27, fill: '#fbe7b5' }, 'Familia');
+})();
+
+freeSeals(document.getElementById('free'));
+beneficios(document.getElementById('beneficios'));
+window.listo = document.fonts.ready.then(() => document.querySelectorAll('.body').forEach(justify));
+</script>
+</body>
+</html>
