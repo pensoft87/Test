@@ -1,4 +1,4 @@
-"""Second pass over the flyer: real logo, watercolor wash behind the bottles, and the
+"""Second pass over the flyer: real logo, multicolour smoke behind the bottles, and the
 'Precio de introducción' seal.  Runs build.py first, so the whole flyer is:
 
     python3 decor.py            # -> flyer-harmonie.png
@@ -156,53 +156,62 @@ glass = ((YY > 741) & (YY < 802)) | (YY > 1039)
 lum = bottles_ref.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
 bmask = np.where(ring & glass, bmask * np.clip((190 - lum) / 50, 0, 1), bmask)
 
-# ---------------------------------------------------------------- 3. watercolor wash behind the bottles
+# ---------------------------------------------------------------- 3. multicolour smoke curtain behind the bottles
 rng = np.random.default_rng(7)
 SHELF = 1037
 
 
-def noise(sigma, seed):
-    """Smooth value noise in roughly [-1, 1]."""
-    n = cv2.GaussianBlur(np.random.default_rng(seed).standard_normal((H, Wd)).astype(np.float32), (0, 0), sigma)
+def noise(sx, sy, seed):
+    """Smooth (optionally anisotropic) value noise in roughly [-1, 1]."""
+    n = np.random.default_rng(seed).standard_normal((H, Wd)).astype(np.float32)
+    n = cv2.GaussianBlur(n, (0, 0), sigmaX=sx, sigmaY=sy)
     return n / (n.std() * 2.5)
 
 
-def fbm(seed, sigmas=(60, 28, 12, 5), weights=(1, 0.5, 0.25, 0.12)):
-    return sum(w * noise(sg, seed + k) for k, (sg, w) in enumerate(zip(sigmas, weights)))
+def warp(field, dx, dy):
+    return cv2.remap(field, XX + dx, YY + dy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
 
 
-def wash(cx, cy, rx, ry, seed, warp=0.28, edge=0.045):
-    """Pigment density of one watercolor blot: ragged edge, darker rim, uneven fill."""
-    d = np.sqrt(((XX - cx) / rx) ** 2 + ((YY - cy) / ry) ** 2) + warp * fbm(seed)
-    inside = np.clip((1 - d) / 0.012, 0, 1)                       # crisp-but-soft paper edge
-    rim = np.exp(-np.clip(1 - d, 0, None) / edge) * 0.55             # pigment pooled at the edge
-    body = 0.32 + 0.16 * noise(18, seed + 9) + 0.10 * noise(4, seed + 11)
-    return inside * np.clip(body + rim, 0, 1)
+def fbm(seed, base=40, octaves=4, aspect=1.6):
+    return sum(0.5 ** k * noise(base / 2 ** k, base * aspect / 2 ** k, seed + k) for k in range(octaves))
 
 
-grain = 0.86 + 0.14 * noise(0.8, 99) + 0.06 * noise(2.5, 98)       # paper granulation
-grain *= (YY < SHELF)                                                 # paint stops at the shelf
-pigments = [(176, 132, 220), (226, 146, 196), (150, 104, 206), (222, 176, 104)]
-WC_Y = 870
-# one broad pale wash tying the row together, then a blot behind each bottle (offset like a shadow)
-broad = wash(572, 905, 520, 200, 1, warp=0.18, edge=0.06) * 0.55
-comp(flyer, np.full((H, Wd, 3), (198, 166, 228), np.float32), np.clip(broad * grain, 0, 1) * 0.75)
-for k, (cx, col) in enumerate(zip(CXS, pigments)):
-    dens = wash(cx + 16, WC_Y + rng.uniform(-15, 15), 118, 205, 20 + 7 * k)
-    comp(flyer, np.full((H, Wd, 3), col, np.float32), np.clip(dens * grain, 0, 1) * 0.85)
-    # second, smaller glaze that does not quite line up — gives the layered watercolor look
-    dens2 = wash(cx - 20, WC_Y + 60, 84, 150, 60 + 7 * k, warp=0.35, edge=0.035)
-    darker = tuple(int(v * 0.82) for v in col)
-    comp(flyer, np.full((H, Wd, 3), darker, np.float32), np.clip(dens2 * grain, 0, 1) * 0.45)
+def smoothstep(e0, e1, x):
+    x = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return x * x * (3 - 2 * x)
 
-# a few splatter drops
-for _ in range(38):
-    k = rng.integers(0, 4)
-    x = CXS[k] + rng.normal(0, 95)
-    y = min(WC_Y + rng.normal(-40, 130), SHELF - 8)
-    r = rng.choice([1.2, 1.8, 2.5, 3.5], p=[0.4, 0.3, 0.2, 0.1])
-    a = mask((Wd, H), lambda d, s, x=x, y=y, r=r: d.ellipse([(x - r) * s, (y - r) * s, (x + r) * s, (y + r) * s], fill=255))
-    comp(flyer, np.full((H, Wd, 3), pigments[k], np.float32), a * rng.uniform(0.45, 0.8))
+
+# domain warping (twice) gives the curling, folding look of smoke rising from the shelf
+wx = 60 * fbm(1, 50, 3) ; wy = 80 * fbm(4, 50, 3)
+wx2 = wx + 25 * warp(fbm(7, 18, 3), wx, wy) ; wy2 = wy + 35 * warp(fbm(10, 18, 3), wx, wy)
+billow = warp(fbm(13, 34, 4), wx2, wy2)
+# wisps: thin bright ridges that follow the same flow
+ridge = (1 - np.abs(warp(fbm(17, 12, 3, 2.2), wx2, wy2))) ** 7
+ridge = cv2.GaussianBlur(ridge, (0, 0), 0.8)
+
+# envelope: thick at the shelf, rising in uneven plumes and breaking up at the top
+plume = 0.5 + 0.5 * noise(70, 2000, 21)            # varies across x only -> some plumes rise higher
+top = 640 - 120 * plume                             # where the smoke fades out
+rise = smoothstep(top, top + 260, YY)
+sides = smoothstep(55, 150, XX) * smoothstep(1067, 972, XX)
+env = rise * sides * np.clip((SHELF - YY) / 4, 0, 1)
+
+dens = smoothstep(-0.25, 0.55, billow + 0.45 * (rise - 0.5))
+density = np.clip(dens * 0.85 + ridge * 0.8 * (0.4 + 0.6 * dens), 0, 1) * env
+
+# colour swirls through the curtain (follows the warp, not just left-to-right)
+stops = np.array([(150, 92, 226), (236, 96, 176), (196, 150, 244), (248, 196, 104), (226, 120, 210), (128, 86, 214)], np.float32)
+t = np.clip(XX / Wd * 0.85 + 0.35 * warp(fbm(30, 60, 2), wx2 * 1.5, wy2 * 1.5) + 0.08, 0, 0.999) * (len(stops) - 1)
+i0 = t.astype(int)
+col = lerp(stops[i0], stops[np.minimum(i0 + 1, len(stops) - 1)], t - i0)
+col = col * (1 - 0.45 * ridge[..., None]) + 255 * 0.45 * ridge[..., None]      # bright wisps
+dark = 1 - (flyer.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)) / 255
+a = np.clip(density * 0.9 + 0.3 * env * dark * smoothstep(-0.6, 0.4, billow), 0, 0.95)   # denser over the dark band
+comp(flyer, col, a)
+# soft halo of coloured light around the smoke
+glow = cv2.GaussianBlur(a, (0, 0), 14)
+base = flyer.astype(np.float32) / 255
+flyer[:] = np.clip(255 * (1 - (1 - base) * (1 - (col / 255) * glow[..., None] * 0.4)), 0, 255).astype(np.uint8)
 
 # contact shadows on the shelf
 shadow = np.zeros((H, Wd), np.float32)
