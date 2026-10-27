@@ -1,4 +1,4 @@
-"""Second pass over the flyer: real logo, light halo behind each bottle, and the
+"""Second pass over the flyer: real logo, liquid-gold ribbons and oil drops behind the bottles, and the
 'Precio de introducción' seal.  Runs build.py first, so the whole flyer is:
 
     python3 decor.py            # -> flyer-harmonie.png
@@ -156,59 +156,98 @@ glass = ((YY > 741) & (YY < 802)) | (YY > 1039)
 lum = bottles_ref.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
 bmask = np.where(ring & glass, bmask * np.clip((190 - lum) / 50, 0, 1), bmask)
 
-# ---------------------------------------------------------------- 3. halo of light behind each bottle
+# ---------------------------------------------------------------- 3. silk ribbons of liquid gold + floating oil drops
 rng = np.random.default_rng(7)
 SHELF = 1037
-HALO_Y = 845                                    # centre of the glow, behind the bottle shoulders/label
+RY0, RY1 = 560, SHELF                         # band of the flyer the ribbons live in
 
 
-def smoothstep(e0, e1, x):
-    x = np.clip((x - e0) / (e1 - e0), 0, 1)
-    return x * x * (3 - 2 * x)
+def ramp(stops, t):
+    """Map t in [0,1] through a list of colours."""
+    stops = np.asarray(stops, np.float32)
+    t = np.clip(t, 0, 0.9999) * (len(stops) - 1)
+    i = t.astype(int)
+    return lerp(stops[i], stops[i + 1], t - i)
 
 
-light = np.zeros((H, Wd), np.float32)            # how much light reaches each pixel
-rings = []                                       # thin golden aureole around each glow
-beams = []                                       # the rays alone, tinted gold afterwards
-for cx in CXS:
-    dx, dy = XX - cx, (YY - HALO_Y) * 0.92
-    r = np.hypot(dx, dy)
-    th = np.arctan2(dy, dx)
-    # sunburst rays: many thin beams of uneven strength and width
-    rays = np.zeros_like(r)
-    for _ in range(3):
-        n = int(rng.integers(14, 22))
-        ph = rng.uniform(0, 2 * math.pi)
-        rays += rng.uniform(0.5, 1.0) * ((0.5 + 0.5 * np.cos(n * th + ph)) ** rng.uniform(10, 24))
-    rays *= np.exp(-r / 105) * smoothstep(30, 80, r) * smoothstep(165, 120, r)
-    core = np.exp(-(r / 92) ** 2) + 0.3 * np.exp(-(r / 140) ** 2)
-    light = np.maximum(light, core + 0.5 * rays)
-    beams.append(rays)
-    rings.append(np.exp(-((r - 104) / 2.6) ** 2) + 0.6 * np.exp(-((r - 111) / 1.3) ** 2))
-light *= np.clip((SHELF - YY) / 6, 0, 1)
-light = np.clip(light, 0, 1.3)
+def ribbon(center, half, twist, palette, seed_phase=0.0):
+    """Render a twisting satin ribbon. Returns (rgb, alpha) for rows RY0..RY1 at full res."""
+    xs = (np.arange(Wd * SS) + 0.5) / SS
+    ys = RY0 + (np.arange((RY1 - RY0) * SS) + 0.5) / SS
+    c, phi = center(xs), twist(xs)
+    slope = np.gradient(c, xs)
+    nz = np.abs(np.cos(phi))                                   # how much the ribbon faces us
+    hv = half * (0.12 + 0.88 * nz) * np.sqrt(1 + slope ** 2)   # visible half-height
+    v = (ys[:, None] - c[None, :]) / hv[None, :]               # -1..1 across the ribbon
+    inside = np.abs(v) < 1
+    sp = np.sin(phi)[None, :]
+    shade = 0.5 + 0.5 * np.cos(math.pi * v * 0.85 - sp * 1.5 + seed_phase)
+    shade = shade * (0.45 + 0.55 * nz[None, :]) * np.where(np.cos(phi)[None, :] > 0, 1.0, 0.78)
+    spec = np.exp(-((v - 0.45 * sp) / 0.16) ** 2) * nz[None, :] ** 2
+    edge = np.exp(-np.clip(1 - np.abs(v), 0, 1) / 0.06)                 # thin bright rim at the edges
+    b = np.clip(0.08 + 0.78 * shade + 0.55 * spec + 0.18 * edge, 0, 1)
+    rgb = ramp(palette, b)
+    a = inside.astype(np.float32)
+    small = lambda img: cv2.resize(img, (Wd, RY1 - RY0), interpolation=cv2.INTER_AREA)
+    return small(rgb * a[..., None]), small(a)
 
-# warm white/gold light: tint first (so it shows on the pale top), then screen for the glow
-warm = lerp((250, 196, 104), (255, 250, 236), np.clip(light, 0, 1) ** 1.5)
-comp(flyer, warm, np.clip(light, 0, 1) * 0.55)
-base = flyer.astype(np.float32) / 255
-flyer[:] = np.clip(255 * (1 - (1 - base) * (1 - (warm / 255) * np.clip(light, 0, 1)[..., None] * 0.6)), 0, 255).astype(np.uint8)
 
-beam = np.clip(sum(beams), 0, 1) * np.clip((SHELF - YY) / 6, 0, 1)
-comp(flyer, np.full((H, Wd, 3), (246, 206, 128), np.float32), beam * 0.55)
-ring = np.clip(sum(rings), 0, 1) * np.clip((SHELF - YY) / 6, 0, 1)
-comp(flyer, lerp(GOLD_HI, GOLD, np.clip((YY - 700) / 300, 0, 1)), ring * 0.85)
+def put_layer(rgb_pm, a, shadow=0.0, off=(10, 6)):
+    """Composite a premultiplied layer into the ribbon band, with an optional soft shadow."""
+    reg = flyer[RY0:RY1].astype(np.float32)
+    if shadow:
+        sh = cv2.GaussianBlur(np.roll(a, off, (0, 1)), (0, 0), 9) * shadow
+        reg = reg * (1 - sh[..., None]) + np.array([40, 8, 44], np.float32) * sh[..., None]
+    reg = rgb_pm + reg * (1 - a[..., None])
+    flyer[RY0:RY1] = np.clip(reg, 0, 255).astype(np.uint8)
 
-# a few twinkles caught in the light
-for _ in range(16):
-    k = int(rng.integers(0, 4))
-    ang, rad = rng.uniform(0, 2 * math.pi), rng.uniform(104, 104)
-    x, y = CXS[k] + rad * math.cos(ang), HALO_Y + rad * math.sin(ang) / 0.92
-    if y > SHELF - 10:
-        continue
-    r = rng.uniform(4, 8)
-    m = mask((Wd, H), lambda d, s, x=x, y=y, r=r: d.polygon([(px * s, py * s) for px, py in star_pts(x, y, r, r * 0.2, 4)], fill=255))
-    comp(flyer, np.full((H, Wd, 3), (255, 246, 214), np.float32), np.clip(m + cv2.GaussianBlur(m, (0, 0), r * 0.7) * 0.6, 0, 1))
+
+GOLD_RAMP = [(70, 34, 6), (138, 82, 18), (196, 138, 44), (236, 188, 92), (252, 226, 150), (255, 249, 226)]
+LILAC_RAMP = [(52, 20, 78), (98, 56, 150), (150, 108, 210), (196, 166, 238), (232, 216, 252), (255, 252, 255)]
+
+# lilac satin ribbon behind, liquid-gold ribbon in front of it; both sweep up from left to right
+lilac = ribbon(lambda x: 905 - 0.16 * (x - 40) + 48 * np.sin(2 * math.pi * x / 470 + 2.3),
+               21, lambda x: 2 * math.pi * x / 360 + 0.9 * np.sin(2 * math.pi * x / 610) + 1.2, LILAC_RAMP, 0.4)
+gold = ribbon(lambda x: 960 - 0.2 * (x - 40) + 62 * np.sin(2 * math.pi * x / 540 + 0.5),
+              31, lambda x: 2 * math.pi * x / 420 + 0.8 * np.sin(2 * math.pi * x / 700), GOLD_RAMP)
+put_layer(*lilac, shadow=0.35)
+put_layer(*gold, shadow=0.45)
+
+
+def drop(cx, cy, r, tilt=0.0):
+    """A glossy golden oil drop (teardrop pointing up)."""
+    pad = int(r * 3)
+    x0, y0 = int(cx) - pad, int(cy) - pad
+    n = 2 * pad
+    gy_, gx_ = np.mgrid[0:n * SS, 0:n * SS].astype(np.float32) / SS
+    u, w = gx_ - (cx - x0), gy_ - (cy - y0)
+    ca, sa = math.cos(tilt), math.sin(tilt)
+    u, w = u * ca + w * sa, -u * sa + w * ca
+    # teardrop: circle of radius r, with a point at height 2.1 r above its centre
+    k = np.clip(-w / (2.1 * r), 0, 1)
+    width = np.where(w > 0, np.sqrt(np.clip(r * r - w * w, 0, None)), r * (1 - k) ** 1.4 * np.sqrt(np.clip(1 - (k * 0.2) ** 2, 0, 1)))
+    inside = (np.abs(u) < width) & (w < r) & (w > -2.1 * r)
+    rr = np.hypot(u / r, (w - r * 0.15) / r)
+    body = ramp([(150, 86, 10), (214, 150, 30), (246, 196, 60), (255, 226, 120)], np.clip(0.95 - 0.55 * rr + 0.25 * (u / r), 0, 1))
+    hl = np.exp(-(((u + 0.38 * r) / (0.16 * r)) ** 2 + ((w + 0.05 * r) / (0.45 * r)) ** 2))       # long highlight
+    dot = np.exp(-(((u - 0.3 * r) / (0.1 * r)) ** 2 + ((w - 0.45 * r) / (0.1 * r)) ** 2))          # small sparkle
+    rim = np.exp(-((1 - np.clip(np.abs(u) / np.maximum(width, 1e-3), 0, 1)) / 0.12)) * 0.35
+    col = body * (1 - rim[..., None]) + np.array([255, 236, 170]) * rim[..., None]
+    col = col + 255 * np.clip(hl * 0.85 + dot, 0, 1)[..., None]
+    a = inside.astype(np.float32)
+    col = cv2.resize(np.clip(col, 0, 255) * a[..., None], (n, n), interpolation=cv2.INTER_AREA)
+    a = cv2.resize(a, (n, n), interpolation=cv2.INTER_AREA)
+    reg = flyer[y0:y0 + n, x0:x0 + n].astype(np.float32)
+    sh = cv2.GaussianBlur(np.roll(a, (int(r * 0.5), int(r * 0.3)), (0, 1)), (0, 0), r * 0.35) * 0.3
+    reg = reg * (1 - sh[..., None]) + np.array([60, 20, 40]) * sh[..., None]
+    flyer[y0:y0 + n, x0:x0 + n] = np.clip(col + reg * (1 - a[..., None]), 0, 255).astype(np.uint8)
+
+
+# drops scattered in the gaps between the bottles, as if splashing off the ribbon
+for x, y, r, t in [(98, 868, 9, 0.25), (327, 760, 12, -0.2), (318, 845, 6, 0.3), (560, 700, 9, 0.15),
+                   (548, 815, 13, -0.25), (790, 742, 11, 0.2), (800, 838, 6, -0.3), (1030, 830, 10, -0.2),
+                   (1022, 760, 6, 0.3), (110, 760, 6, -0.2), (570, 905, 7, 0.1)]:
+    drop(x, y, r, t)
 
 # contact shadows on the shelf
 shadow = np.zeros((H, Wd), np.float32)
