@@ -1,4 +1,4 @@
-"""Second pass over the flyer: real logo, multicolour smoke behind the bottles, and the
+"""Second pass over the flyer: real logo, light halo behind each bottle, and the
 'Precio de introducción' seal.  Runs build.py first, so the whole flyer is:
 
     python3 decor.py            # -> flyer-harmonie.png
@@ -156,24 +156,10 @@ glass = ((YY > 741) & (YY < 802)) | (YY > 1039)
 lum = bottles_ref.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
 bmask = np.where(ring & glass, bmask * np.clip((190 - lum) / 50, 0, 1), bmask)
 
-# ---------------------------------------------------------------- 3. multicolour smoke curtain behind the bottles
+# ---------------------------------------------------------------- 3. halo of light behind each bottle
 rng = np.random.default_rng(7)
 SHELF = 1037
-
-
-def noise(sx, sy, seed):
-    """Smooth (optionally anisotropic) value noise in roughly [-1, 1]."""
-    n = np.random.default_rng(seed).standard_normal((H, Wd)).astype(np.float32)
-    n = cv2.GaussianBlur(n, (0, 0), sigmaX=sx, sigmaY=sy)
-    return n / (n.std() * 2.5)
-
-
-def warp(field, dx, dy):
-    return cv2.remap(field, XX + dx, YY + dy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-
-
-def fbm(seed, base=40, octaves=4, aspect=1.6):
-    return sum(0.5 ** k * noise(base / 2 ** k, base * aspect / 2 ** k, seed + k) for k in range(octaves))
+HALO_Y = 845                                    # centre of the glow, behind the bottle shoulders/label
 
 
 def smoothstep(e0, e1, x):
@@ -181,37 +167,48 @@ def smoothstep(e0, e1, x):
     return x * x * (3 - 2 * x)
 
 
-# domain warping (twice) gives the curling, folding look of smoke rising from the shelf
-wx = 60 * fbm(1, 50, 3) ; wy = 80 * fbm(4, 50, 3)
-wx2 = wx + 25 * warp(fbm(7, 18, 3), wx, wy) ; wy2 = wy + 35 * warp(fbm(10, 18, 3), wx, wy)
-billow = warp(fbm(13, 34, 4), wx2, wy2)
-# wisps: thin bright ridges that follow the same flow
-ridge = (1 - np.abs(warp(fbm(17, 12, 3, 2.2), wx2, wy2))) ** 7
-ridge = cv2.GaussianBlur(ridge, (0, 0), 0.8)
+light = np.zeros((H, Wd), np.float32)            # how much light reaches each pixel
+rings = []                                       # thin golden aureole around each glow
+beams = []                                       # the rays alone, tinted gold afterwards
+for cx in CXS:
+    dx, dy = XX - cx, (YY - HALO_Y) * 0.92
+    r = np.hypot(dx, dy)
+    th = np.arctan2(dy, dx)
+    # sunburst rays: many thin beams of uneven strength and width
+    rays = np.zeros_like(r)
+    for _ in range(3):
+        n = int(rng.integers(14, 22))
+        ph = rng.uniform(0, 2 * math.pi)
+        rays += rng.uniform(0.5, 1.0) * ((0.5 + 0.5 * np.cos(n * th + ph)) ** rng.uniform(10, 24))
+    rays *= np.exp(-r / 105) * smoothstep(30, 80, r) * smoothstep(165, 120, r)
+    core = np.exp(-(r / 92) ** 2) + 0.3 * np.exp(-(r / 140) ** 2)
+    light = np.maximum(light, core + 0.5 * rays)
+    beams.append(rays)
+    rings.append(np.exp(-((r - 104) / 2.6) ** 2) + 0.6 * np.exp(-((r - 111) / 1.3) ** 2))
+light *= np.clip((SHELF - YY) / 6, 0, 1)
+light = np.clip(light, 0, 1.3)
 
-# envelope: thick at the shelf, rising in uneven plumes and breaking up at the top
-plume = 0.5 + 0.5 * noise(70, 2000, 21)            # varies across x only -> some plumes rise higher
-top = 640 - 120 * plume                             # where the smoke fades out
-rise = smoothstep(top, top + 260, YY)
-sides = smoothstep(55, 150, XX) * smoothstep(1067, 972, XX)
-env = rise * sides * np.clip((SHELF - YY) / 4, 0, 1)
-
-dens = smoothstep(-0.25, 0.55, billow + 0.45 * (rise - 0.5))
-density = np.clip(dens * 0.85 + ridge * 0.8 * (0.4 + 0.6 * dens), 0, 1) * env
-
-# colour swirls through the curtain (follows the warp, not just left-to-right)
-stops = np.array([(150, 92, 226), (236, 96, 176), (196, 150, 244), (248, 196, 104), (226, 120, 210), (128, 86, 214)], np.float32)
-t = np.clip(XX / Wd * 0.85 + 0.35 * warp(fbm(30, 60, 2), wx2 * 1.5, wy2 * 1.5) + 0.08, 0, 0.999) * (len(stops) - 1)
-i0 = t.astype(int)
-col = lerp(stops[i0], stops[np.minimum(i0 + 1, len(stops) - 1)], t - i0)
-col = col * (1 - 0.45 * ridge[..., None]) + 255 * 0.45 * ridge[..., None]      # bright wisps
-dark = 1 - (flyer.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)) / 255
-a = np.clip(density * 0.9 + 0.3 * env * dark * smoothstep(-0.6, 0.4, billow), 0, 0.95)   # denser over the dark band
-comp(flyer, col, a)
-# soft halo of coloured light around the smoke
-glow = cv2.GaussianBlur(a, (0, 0), 14)
+# warm white/gold light: tint first (so it shows on the pale top), then screen for the glow
+warm = lerp((250, 196, 104), (255, 250, 236), np.clip(light, 0, 1) ** 1.5)
+comp(flyer, warm, np.clip(light, 0, 1) * 0.55)
 base = flyer.astype(np.float32) / 255
-flyer[:] = np.clip(255 * (1 - (1 - base) * (1 - (col / 255) * glow[..., None] * 0.4)), 0, 255).astype(np.uint8)
+flyer[:] = np.clip(255 * (1 - (1 - base) * (1 - (warm / 255) * np.clip(light, 0, 1)[..., None] * 0.6)), 0, 255).astype(np.uint8)
+
+beam = np.clip(sum(beams), 0, 1) * np.clip((SHELF - YY) / 6, 0, 1)
+comp(flyer, np.full((H, Wd, 3), (246, 206, 128), np.float32), beam * 0.55)
+ring = np.clip(sum(rings), 0, 1) * np.clip((SHELF - YY) / 6, 0, 1)
+comp(flyer, lerp(GOLD_HI, GOLD, np.clip((YY - 700) / 300, 0, 1)), ring * 0.85)
+
+# a few twinkles caught in the light
+for _ in range(16):
+    k = int(rng.integers(0, 4))
+    ang, rad = rng.uniform(0, 2 * math.pi), rng.uniform(104, 104)
+    x, y = CXS[k] + rad * math.cos(ang), HALO_Y + rad * math.sin(ang) / 0.92
+    if y > SHELF - 10:
+        continue
+    r = rng.uniform(4, 8)
+    m = mask((Wd, H), lambda d, s, x=x, y=y, r=r: d.polygon([(px * s, py * s) for px, py in star_pts(x, y, r, r * 0.2, 4)], fill=255))
+    comp(flyer, np.full((H, Wd, 3), (255, 246, 214), np.float32), np.clip(m + cv2.GaussianBlur(m, (0, 0), r * 0.7) * 0.6, 0, 1))
 
 # contact shadows on the shelf
 shadow = np.zeros((H, Wd), np.float32)
