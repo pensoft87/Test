@@ -1,4 +1,4 @@
-// Exports flyer.html: PNG at 300 ppi (1240 x 1754 = 105 x 148.5 mm, a quarter of A4) and a vector PDF.
+// Exports flyer.html: PNG at 600 ppi (2480 x 3508 = 105 x 148.5 mm, a quarter of A4) and a vector PDF.
 // usage: node scripts/render.js <out dir>
 const path = require('path');
 const { chromium } = require('playwright');
@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
 const out = process.argv[2] || '.';
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1240, height: 1754 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: 1240, height: 1754 }, deviceScaleFactor: 2 });
   await page.goto('file://' + path.resolve(__dirname, '..', 'flyer.html'));
   await page.evaluate(() => window.listo);
   await page.waitForLoadState('networkidle');

@@ -6,21 +6,27 @@ wider than the label is long divided by pi, so the label covers only part of the
 the white jar shows at the sides. Seen from a little above: the edges bow downward in the middle.
 """
 import math, sys, numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 src, dst = sys.argv[1], sys.argv[2]
-lab = np.asarray(Image.open(src).convert('RGB')).astype(np.float64)
-LH, LW = lab.shape[:2]
+label = Image.open(src).convert('RGB')
 
 SS = 3
-W = 560                                   # jar width (px)
-E = 30                                    # depth of the ellipses (view from above)
-LID = 70                                  # white screw lid
-LIP = 10                                  # bare jar above and below the label
-BODY = 300                                # label height (px) = 2.5 in
+K = 2                                     # drawn at twice the size it shows on the flyer, for print
+W = 560 * K                               # jar width (px)
+E = 30 * K                                # depth of the ellipses (view from above)
+LID = 70 * K                              # white screw lid
+LIP = 10 * K                              # bare jar above and below the label
+BODY = 300 * K                            # label height (px) = 2.5 in
 PPI = BODY / 2.5
 R_IN = W / 2 / PPI                        # jar radius in inches
 H = E + LID + E + LIP + BODY + LIP + E + 4
+
+# filter the label down to the size it is drawn at before wrapping it, so its fine print stays clean
+# (sampling the full-size label straight onto the jar would alias)
+LH = BODY * SS
+LW = round(label.width * LH / label.height)
+lab = np.asarray(label.resize((LW, LH), Image.LANCZOS)).astype(np.float64)
 
 w, h = W * SS, H * SS
 x = (np.arange(w) + 0.5) / w * 2 - 1
@@ -72,5 +78,7 @@ put(top, tcol)
 
 im = Image.fromarray(np.clip(np.dstack([img[..., :3], img[..., 3] * 255]), 0, 255).astype(np.uint8), 'RGBA')
 im = im.resize((W, H), Image.LANCZOS)
+rgb = im.convert('RGB').filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
+im = Image.merge('RGBA', (*rgb.split(), im.getchannel('A')))
 im.save(dst)
 print(dst, im.size, 'label covers %.0f deg of the jar' % math.degrees(6 / R_IN))
