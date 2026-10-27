@@ -1,7 +1,7 @@
-"""Second pass over the flyer: real logo, liquid-gold ribbons and oil drops behind the bottles, and the
+"""Second pass over the flyer: real logo, a background behind the bottles (variant A/B/C), and the
 'Precio de introducción' seal.  Runs build.py first, so the whole flyer is:
 
-    python3 decor.py            # -> flyer-harmonie.png
+    python3 decor.py [out.png] [A|B|C]   # -> flyer-harmonie.png, variant A
 """
 import math, os, subprocess, sys, tempfile
 import cv2
@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 SRC = 'src'
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'flyer-harmonie.png'
+VARIANT = sys.argv[2] if len(sys.argv) > 2 else 'A'
 IN = os.path.join(tempfile.mkdtemp(), 'base.png')
 subprocess.run([sys.executable, 'build.py', SRC, IN], check=True)
 GOLD_HI, GOLD, GOLD_LO = (255, 236, 180), (222, 182, 108), (160, 112, 48)
@@ -156,98 +157,125 @@ glass = ((YY > 741) & (YY < 802)) | (YY > 1039)
 lum = bottles_ref.astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
 bmask = np.where(ring & glass, bmask * np.clip((190 - lum) / 50, 0, 1), bmask)
 
-# ---------------------------------------------------------------- 3. silk ribbons of liquid gold + floating oil drops
+# ---------------------------------------------------------------- 3. background behind the bottles
+# three looks to choose from:  A = bokeh lights,  B = trail of gold glitter,  C = half-moon with gold rings
 rng = np.random.default_rng(7)
 SHELF = 1037
-RY0, RY1 = 560, SHELF                         # band of the flyer the ribbons live in
+below_shelf = np.clip((SHELF - YY) / 4, 0, 1)
 
 
-def ramp(stops, t):
-    """Map t in [0,1] through a list of colours."""
-    stops = np.asarray(stops, np.float32)
-    t = np.clip(t, 0, 0.9999) * (len(stops) - 1)
-    i = t.astype(int)
-    return lerp(stops[i], stops[i + 1], t - i)
+def smoothstep(e0, e1, x):
+    x = np.clip((x - e0) / (e1 - e0), 0, 1)
+    return x * x * (3 - 2 * x)
 
 
-def ribbon(center, half, twist, palette, seed_phase=0.0):
-    """Render a twisting satin ribbon. Returns (rgb, alpha) for rows RY0..RY1 at full res."""
-    xs = (np.arange(Wd * SS) + 0.5) / SS
-    ys = RY0 + (np.arange((RY1 - RY0) * SS) + 0.5) / SS
-    c, phi = center(xs), twist(xs)
-    slope = np.gradient(c, xs)
-    nz = np.abs(np.cos(phi))                                   # how much the ribbon faces us
-    hv = half * (0.12 + 0.88 * nz) * np.sqrt(1 + slope ** 2)   # visible half-height
-    v = (ys[:, None] - c[None, :]) / hv[None, :]               # -1..1 across the ribbon
-    inside = np.abs(v) < 1
-    sp = np.sin(phi)[None, :]
-    shade = 0.5 + 0.5 * np.cos(math.pi * v * 0.85 - sp * 1.5 + seed_phase)
-    shade = shade * (0.45 + 0.55 * nz[None, :]) * np.where(np.cos(phi)[None, :] > 0, 1.0, 0.78)
-    spec = np.exp(-((v - 0.45 * sp) / 0.16) ** 2) * nz[None, :] ** 2
-    edge = np.exp(-np.clip(1 - np.abs(v), 0, 1) / 0.06)                 # thin bright rim at the edges
-    b = np.clip(0.08 + 0.78 * shade + 0.55 * spec + 0.18 * edge, 0, 1)
-    rgb = ramp(palette, b)
-    a = inside.astype(np.float32)
-    small = lambda img: cv2.resize(img, (Wd, RY1 - RY0), interpolation=cv2.INTER_AREA)
-    return small(rgb * a[..., None]), small(a)
+def screen(rgb, a):
+    """Screen-blend light onto the flyer (shows on the dark band), plus a light tint (shows on the pale top)."""
+    a = np.clip(a, 0, 1) * below_shelf
+    comp(flyer, rgb, a * 0.45)
+    base = flyer.astype(np.float32) / 255
+    flyer[:] = np.clip(255 * (1 - (1 - base) * (1 - rgb / 255 * a[..., None])), 0, 255).astype(np.uint8)
 
 
-def put_layer(rgb_pm, a, shadow=0.0, off=(10, 6)):
-    """Composite a premultiplied layer into the ribbon band, with an optional soft shadow."""
-    reg = flyer[RY0:RY1].astype(np.float32)
-    if shadow:
-        sh = cv2.GaussianBlur(np.roll(a, off, (0, 1)), (0, 0), 9) * shadow
-        reg = reg * (1 - sh[..., None]) + np.array([40, 8, 44], np.float32) * sh[..., None]
-    reg = rgb_pm + reg * (1 - a[..., None])
-    flyer[RY0:RY1] = np.clip(reg, 0, 255).astype(np.uint8)
+def wash(color, cx, cy, rx, ry, strength):
+    comp(flyer, np.full((H, Wd, 3), color, np.float32),
+         np.exp(-(((XX - cx) / rx) ** 2 + ((YY - cy) / ry) ** 2)) * strength * below_shelf)
 
 
-GOLD_RAMP = [(70, 34, 6), (138, 82, 18), (196, 138, 44), (236, 188, 92), (252, 226, 150), (255, 249, 226)]
-LILAC_RAMP = [(52, 20, 78), (98, 56, 150), (150, 108, 210), (196, 166, 238), (232, 216, 252), (255, 252, 255)]
-
-# lilac satin ribbon behind, liquid-gold ribbon in front of it; both sweep up from left to right
-lilac = ribbon(lambda x: 905 - 0.16 * (x - 40) + 48 * np.sin(2 * math.pi * x / 470 + 2.3),
-               21, lambda x: 2 * math.pi * x / 360 + 0.9 * np.sin(2 * math.pi * x / 610) + 1.2, LILAC_RAMP, 0.4)
-gold = ribbon(lambda x: 960 - 0.2 * (x - 40) + 62 * np.sin(2 * math.pi * x / 540 + 0.5),
-              31, lambda x: 2 * math.pi * x / 420 + 0.8 * np.sin(2 * math.pi * x / 700), GOLD_RAMP)
-put_layer(*lilac, shadow=0.35)
-put_layer(*gold, shadow=0.45)
-
-
-def drop(cx, cy, r, tilt=0.0):
-    """A glossy golden oil drop (teardrop pointing up)."""
-    pad = int(r * 3)
-    x0, y0 = int(cx) - pad, int(cy) - pad
-    n = 2 * pad
-    gy_, gx_ = np.mgrid[0:n * SS, 0:n * SS].astype(np.float32) / SS
-    u, w = gx_ - (cx - x0), gy_ - (cy - y0)
-    ca, sa = math.cos(tilt), math.sin(tilt)
-    u, w = u * ca + w * sa, -u * sa + w * ca
-    # teardrop: circle of radius r, with a point at height 2.1 r above its centre
-    k = np.clip(-w / (2.1 * r), 0, 1)
-    width = np.where(w > 0, np.sqrt(np.clip(r * r - w * w, 0, None)), r * (1 - k) ** 1.4 * np.sqrt(np.clip(1 - (k * 0.2) ** 2, 0, 1)))
-    inside = (np.abs(u) < width) & (w < r) & (w > -2.1 * r)
-    rr = np.hypot(u / r, (w - r * 0.15) / r)
-    body = ramp([(150, 86, 10), (214, 150, 30), (246, 196, 60), (255, 226, 120)], np.clip(0.95 - 0.55 * rr + 0.25 * (u / r), 0, 1))
-    hl = np.exp(-(((u + 0.38 * r) / (0.16 * r)) ** 2 + ((w + 0.05 * r) / (0.45 * r)) ** 2))       # long highlight
-    dot = np.exp(-(((u - 0.3 * r) / (0.1 * r)) ** 2 + ((w - 0.45 * r) / (0.1 * r)) ** 2))          # small sparkle
-    rim = np.exp(-((1 - np.clip(np.abs(u) / np.maximum(width, 1e-3), 0, 1)) / 0.12)) * 0.35
-    col = body * (1 - rim[..., None]) + np.array([255, 236, 170]) * rim[..., None]
-    col = col + 255 * np.clip(hl * 0.85 + dot, 0, 1)[..., None]
-    a = inside.astype(np.float32)
-    col = cv2.resize(np.clip(col, 0, 255) * a[..., None], (n, n), interpolation=cv2.INTER_AREA)
-    a = cv2.resize(a, (n, n), interpolation=cv2.INTER_AREA)
-    reg = flyer[y0:y0 + n, x0:x0 + n].astype(np.float32)
-    sh = cv2.GaussianBlur(np.roll(a, (int(r * 0.5), int(r * 0.3)), (0, 1)), (0, 0), r * 0.35) * 0.3
-    reg = reg * (1 - sh[..., None]) + np.array([60, 20, 40]) * sh[..., None]
-    flyer[y0:y0 + n, x0:x0 + n] = np.clip(col + reg * (1 - a[..., None]), 0, 255).astype(np.uint8)
+def bokeh():
+    wash((214, 172, 236), 572, 900, 560, 230, 0.45)
+    layer = np.zeros((H, Wd, 3), np.float32)
+    alpha = np.zeros((H, Wd), np.float32)
+    cols = [(255, 206, 120), (255, 206, 120), (178, 126, 246), (244, 128, 200), (255, 246, 236)]
+    for _ in range(170):
+        r = float(rng.choice([rng.uniform(5, 12), rng.uniform(12, 24), rng.uniform(24, 38)], p=[0.5, 0.35, 0.15]))
+        x = rng.uniform(70, 1050)
+        y = SHELF - abs(rng.normal(0, 190)) - r * 0.3
+        if y < 600:
+            continue
+        col = np.array(cols[rng.integers(0, len(cols))], np.float32)
+        x0, y0, x1, y1 = int(x - r - 12), int(max(y - r - 12, 0)), int(x + r + 12), int(min(y + r + 12, H))
+        x0, x1 = max(x0, 0), min(x1, Wd)
+        d = np.hypot(XX[y0:y1, x0:x1] - x, YY[y0:y1, x0:x1] - y) / r
+        disc = smoothstep(1.0, 1.0 - 2.2 / r - 0.04 * r / 10, d)       # larger = softer edge
+        disc = disc * (0.55 + 0.45 * smoothstep(0.55, 0.97, d))         # brighter rim, like a lens
+        disc *= rng.uniform(0.45, 0.9)
+        alpha[y0:y1, x0:x1] = 1 - (1 - alpha[y0:y1, x0:x1]) * (1 - disc)
+        layer[y0:y1, x0:x1] = layer[y0:y1, x0:x1] * (1 - disc[..., None]) + col * disc[..., None]
+    comp(flyer, layer, alpha * 0.5 * below_shelf)          # colour shows on the pale top
+    screen(layer, alpha * 0.8)
 
 
-# drops scattered in the gaps between the bottles, as if splashing off the ribbon
-for x, y, r, t in [(98, 868, 9, 0.25), (327, 760, 12, -0.2), (318, 845, 6, 0.3), (560, 700, 9, 0.15),
-                   (548, 815, 13, -0.25), (790, 742, 11, 0.2), (800, 838, 6, -0.3), (1030, 830, 10, -0.2),
-                   (1022, 760, 6, 0.3), (110, 760, 6, -0.2), (570, 905, 7, 0.1)]:
-    drop(x, y, r, t)
+def glitter():
+    def bez(t, p):
+        p = np.asarray(p, np.float32)
+        return ((1 - t) ** 3)[:, None] * p[0] + (3 * (1 - t) ** 2 * t)[:, None] * p[1] + \
+               (3 * (1 - t) * t * t)[:, None] * p[2] + (t ** 3)[:, None] * p[3]
+    trails = [([(50, 1010), (250, 540), (820, 560), (1080, 900)], 8000, 26),
+              ([(90, 1030), (330, 640), (760, 620), (1050, 980)], 3500, 12)]
+    layer = Image.new('RGBA', (Wd * SS, H * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    glow = np.zeros((H, Wd), np.float32)
+    for pts, n, spread in trails:
+        t = np.sort(rng.uniform(0, 1, n))
+        c = bez(t, pts)
+        tang = np.gradient(c, axis=0)
+        nrm = np.stack([-tang[:, 1], tang[:, 0]], 1) / (np.linalg.norm(tang, axis=1, keepdims=True) + 1e-6)
+        width = spread * (0.35 + np.sin(math.pi * t) ** 0.7)
+        p = c + nrm * rng.normal(0, 1, n)[:, None] * width[:, None]
+        for (x, y), tt in zip(p, t):
+            if y > SHELF - 2:
+                continue
+            r = float(rng.choice([0.8, 1.2, 1.7, 2.5], p=[0.4, 0.32, 0.2, 0.08]))
+            g = rng.uniform(0, 1)
+            col = (255, int(190 + 60 * g), int(90 + 150 * g ** 2), int(rng.uniform(190, 255)))
+            if rng.uniform() < 0.06:
+                col = (214, 182, 255, 230)                              # a few lilac flecks
+            d.ellipse([(x - r) * SS, (y - r) * SS, (x + r) * SS, (y + r) * SS], fill=col)
+        line = np.zeros((H, Wd), np.float32)
+        cc = bez(np.linspace(0, 1, 600), pts).astype(np.int32)
+        cv2.polylines(line, [cc], False, 1.0, thickness=int(spread * 0.9))
+        glow += cv2.GaussianBlur(line, (0, 0), spread * 0.9)
+    screen(np.full((H, Wd, 3), (255, 222, 160), np.float32), np.clip(glow, 0, 1) * 0.75)
+    arr_l = np.array(layer.resize((Wd, H), Image.LANCZOS), np.float32)
+    comp(flyer, arr_l[..., :3], arr_l[..., 3] / 255 * below_shelf)
+    for _ in range(22):                                                  # sparkles riding the trail
+        pts, _, _ = trails[0]
+        t = rng.uniform(0.05, 0.95)
+        x, y = bez(np.array([t]), pts)[0] + rng.normal(0, 12, 2)
+        if y > SHELF - 10:
+            continue
+        r = rng.uniform(5, 11)
+        m = mask((Wd, H), lambda dd, s, x=x, y=y, r=r: dd.polygon([(px * s, py * s) for px, py in star_pts(x, y, r, r * 0.18, 4)], fill=255))
+        comp(flyer, np.full((H, Wd, 3), (255, 248, 222), np.float32), np.clip(m + cv2.GaussianBlur(m, (0, 0), r * 0.8) * 0.7, 0, 1))
+
+
+def moon():
+    cx, cy, r = 572, 1005, 330
+    rr = np.hypot(XX - cx, YY - cy)
+    disc = smoothstep(r + 0.8, r - 0.8, rr) * below_shelf
+    fillc = lerp((255, 244, 250), (222, 182, 238), smoothstep(0, r, rr))
+    fillc = lerp(fillc, (246, 214, 236), 0.35 * smoothstep(0.3, 1, (XX - cx) / r + 0.5))
+    # soft shadow, then the disc
+    sh = cv2.GaussianBlur(np.roll(disc, (8, 6), (0, 1)), (0, 0), 10) * 0.35
+    comp(flyer, np.full((H, Wd, 3), (60, 14, 60), np.float32), sh)
+    comp(flyer, fillc, disc * 0.95)
+    gold = lerp(GOLD_HI, GOLD_LO, smoothstep(cy - r, cy, YY))
+    for rc, ccx, ccy, w in ((r, cx, cy, 3.0), (r + 22, cx + 26, cy - 6, 1.4), (r - 16, cx, cy, 0.9)):
+        ring = np.exp(-((np.hypot(XX - ccx, YY - ccy) - rc) / w) ** 2) * below_shelf
+        comp(flyer, gold, ring)
+    # small gold beads along the outer ring
+    for k in range(17):
+        ang = math.pi + math.pi * (k + 0.5) / 17
+        x, y = cx + 26 + (r + 22) * math.cos(ang), cy - 6 + (r + 22) * math.sin(ang)
+        if y > SHELF - 6:
+            continue
+        rad = 3.2 if k % 4 == 0 else 1.8
+        m = mask((Wd, H), lambda dd, s, x=x, y=y, rad=rad: dd.ellipse([(x - rad) * s, (y - rad) * s, (x + rad) * s, (y + rad) * s], fill=255))
+        comp(flyer, gold, m)
+
+
+{'A': bokeh, 'B': glitter, 'C': moon}[VARIANT]()
 
 # contact shadows on the shelf
 shadow = np.zeros((H, Wd), np.float32)
