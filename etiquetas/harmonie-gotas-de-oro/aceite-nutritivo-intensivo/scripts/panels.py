@@ -4,17 +4,18 @@ usage: panels.py <base> <out.png>   (needs: pip install segno)
   <base>-plate.png  the empty widened label (1600 x 800), from plate.py
   <base>-layer.png  the model's panel elements (RGBA, model coordinates 1376 x 768)
 
-Every graphic element (pills, seals, icons, ornaments, brush strokes) is the model's own artwork;
-only the copy is typeset, justified, in PT Serif like the model's text. The Instagram QR is a real code.
+Every graphic element (pills, seals, icons, ornaments, brush strokes) is the model's own artwork,
+but for the expiry-date calendar, which is redrawn; the copy is typeset, justified, in PT Serif like the model's text. The Instagram QR is a real code.
 """
 import os, sys, numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..', '..', 'scripts'))
 import segno
 import typeset
 import rico
+from fonts import font
 from boxes import BOXES, SEALS
 
 base, dst = sys.argv[1], sys.argv[2]
@@ -77,6 +78,54 @@ def place(im, x, y):
 def text(s, width, size=BODY_SIZE, lh=BODY_LH):
     return typeset.text_block(s, width, size, lh, INK, weight=None)[0]
 
+def fecha_block():
+    """Calendar + "Fecha de caducidad" + a small gold rule, drawn afresh: the model's own one carries the
+    lighter gold it sat on, which shows as a pale halo on this darker part of the label."""
+    S = 4
+    CAL = (62, 34, 10)                       # the model's icon brown
+    cw, gap, size = 40, 12, 18
+    f = font('PTSerif-Regular.ttf', size * S)
+    label = 'Fecha de caducidad'
+    tw = f.getlength(label) / S
+    w, h = int(cw + gap + tw + 4), 46
+    im = Image.new('RGBA', (w * S, h * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    s = lambda *v: [c * S for c in v]
+    # calendar: rounded body, filled header, two rings, check mark
+    d.rounded_rectangle(s(2, 7, cw - 2, h - 3), radius=6 * S, outline=CAL + (255,), width=round(3.2 * S))
+    d.rounded_rectangle(s(2, 7, cw - 2, 16), radius=6 * S, fill=CAL + (255,))
+    d.rectangle(s(2, 12, cw - 2, 16), fill=CAL + (255,))
+    for rx in (11, cw - 15):
+        d.rounded_rectangle(s(rx, 2, rx + 4, 12), radius=2 * S, fill=CAL + (255,))
+    d.line(s(11.5, 29, 17.5, 35, 28.5, 23), fill=CAL + (255,), width=round(3.8 * S), joint='curve')
+    for cx, cy in ((11.5, 29), (28.5, 23)):
+        r = 1.9 * S
+        d.ellipse((cx * S - r, cy * S - r, cx * S + r, cy * S + r), fill=CAL + (255,))
+    # label, its cap height level with the top of the calendar body
+    tx = (cw + gap) * S
+    d.text((tx, 9 * S - f.getbbox('F')[1]), label, font=f, fill=INK + (255,))
+    im = im.resize((w, h), Image.LANCZOS)
+    # a thin gold rule under the label, fading at its ends, with a small four-point star in the middle
+    rw = tw * 0.92
+    x0 = cw + gap + (tw - rw) / 2
+    ry, cx = h - 7, cw + gap + tw / 2
+    rule = Image.new('RGBA', (w * S, h * S), (0, 0, 0, 0))
+    rd = ImageDraw.Draw(rule)
+    dark, light = np.array([176., 124., 38.]), np.array([250., 220., 140.])
+    for i in range(int(rw * S)):
+        t = i / (rw * S)
+        fade = min(1.0, t / 0.18, (1 - t) / 0.18)
+        col = dark + (light - dark) * (1 - abs(t - 0.5) * 2) ** 2
+        rd.line([(x0 * S + i, ry * S - 0.7 * S), (x0 * S + i, ry * S + 0.7 * S)],
+                fill=tuple(int(c) for c in col) + (int(255 * fade),))
+    for r, col in ((6.5, (176, 124, 38)), (5.0, (252, 226, 150))):
+        k = 0.22 * r
+        pts = [(cx, ry - r), (cx + k, ry - k), (cx + r, ry), (cx + k, ry + k),
+               (cx, ry + r), (cx - k, ry + k), (cx - r, ry), (cx - k, ry - k)]
+        rd.polygon([(px * S, py * S) for px, py in pts], fill=col + (255,))
+    im.alpha_composite(rule.resize((w, h), Image.LANCZOS))
+    return im
+
 # ------------------------------------------------------------------ left panel
 LX, LW = 40, 496                             # column: x from 40 to the oval's glow (496: the evenest lines)
 pp = asset('propiedades')
@@ -85,7 +134,7 @@ pi = asset('ingredientes')
 formula = asset('formula', SC * 0.9)
 belleza = asset('belleza', SC * 0.8)
 seals = asset('sellos', SC * 0.74)
-fecha = asset('fecha', SC * 0.8)
+fecha = fecha_block()
 
 tp, ti = text(COPY['propiedades'], LW), text(COPY['ingredientes'], LW)
 y = TOP_Y
