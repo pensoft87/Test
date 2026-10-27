@@ -99,10 +99,12 @@ row = max(formula.height, belleza.height)
 place(formula, LX, y + (row - formula.height) / 2)
 place(belleza, LX + LW - belleza.width, y + (row - belleza.height) / 2)
 y += row + 6
-# the "free" seals with the expiry date beside them
-place(seals, LX + 16, y)                     # clear of the leaves at the left edge
-place(fecha, LX + LW - fecha.width, y + (seals.height - fecha.height) / 2)
-y += seals.height
+# the "free" seals, and the expiry date in the free space under them, between the leaves at the foot
+SX = LX + 60
+place(seals, SX, y)
+y += seals.height + 6
+place(fecha, SX + (seals.width - fecha.width) / 2, y)
+y += fecha.height
 print('left column ends at', y)
 
 # ------------------------------------------------------------------ right panel
