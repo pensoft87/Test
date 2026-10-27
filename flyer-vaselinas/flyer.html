@@ -263,6 +263,20 @@ function body(g, cx, top, w, bottom, { shirt, collar, skin, neckW }) {
 // podium under the jars
 (function () {
   const g = el(FAM, 'g');
+  // a lavender moon behind each jar, as on the oil flyer, so the jars stand out; it sets on the podium
+  const fd = el(FAM, 'defs');
+  const moon = el(fd, 'radialGradient', { id: 'moon', cx: .42, cy: .38, r: .7 });
+  [[0, '#f4ecfb'], [.55, '#d9c3ee'], [1, '#b08ad4']].forEach(([o, c]) => el(moon, 'stop', { offset: o, 'stop-color': c }));
+  const set = el(fd, 'clipPath', { id: 'moonSet' });
+  el(set, 'rect', { x: 0, y: 0, width: 1240, height: 1222 });
+  for (const cx of [203, 1037]) {
+    const R = 196, cy = 1036;
+    el(g, 'circle', { cx, cy, r: R + 70, fill: `url(#glow${F})` });
+    const m = el(g, 'g', { 'clip-path': 'url(#moonSet)' });
+    el(m, 'circle', { cx, cy, r: R, fill: 'url(#moon)' });
+    el(m, 'circle', { cx, cy, r: R, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 6 });
+    el(m, 'circle', { cx, cy, r: R - 16, fill: 'none', stroke: `url(#gold${F})`, 'stroke-width': 2, opacity: .8 });
+  }
   for (const cx of [203, 1037]) {
     el(g, 'ellipse', { cx, cy: 1222, rx: 172, ry: 28, fill: `url(#podium${F})`, stroke: `url(#gold${F})`, 'stroke-width': 3 });
     el(g, 'ellipse', { cx, cy: 1216, rx: 140, ry: 13, fill: '#3b1030', opacity: .18 });
