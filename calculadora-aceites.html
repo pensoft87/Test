@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Producción</title>
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --text:#1f2a24; --muted:#5f6b64; --line:#e2ded3;
+  --accent:#2f6f4e; --accent-ink:#ffffff; --accent-soft:#e6f0ea;
+  --warn:#8a5200; --warn-bg:#fff3dc; --bad:#b3261e; --bad-bg:#fde8e6; --ok:#1d6b3a; --ok-bg:#e3f4e8;
+  --input:#ffffff; --shadow:0 1px 2px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16191a; --surface:#1f2425; --text:#e8ece9; --muted:#9aa6a0; --line:#323a3b;
+    --accent:#5fbf8c; --accent-ink:#0d1f16; --accent-soft:#1d2e26;
+    --warn:#f0b254; --warn-bg:#3a2d12; --bad:#ff8a80; --bad-bg:#3d1f1d; --ok:#7fd9a1; --ok-bg:#1b3325;
+    --input:#171b1c; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px 48px}
+h1{font-size:22px;margin:0}
+h2{font-size:17px;margin:0 0 4px}
+.sub{margin:2px 0 0;color:var(--muted);font-size:13px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:20px 0 12px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.actions label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:7px 12px;border-radius:8px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.danger{color:var(--bad)}
+button.icon{padding:5px 9px;line-height:1}
+input,select{font:inherit;color:var(--text);background:var(--input);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=number]{width:100%}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.banner{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--line);font-size:14px}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);text-align:left;font-weight:600;padding:6px 6px;white-space:nowrap}
+td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pair{display:flex;gap:4px}
+.pair input{width:70px}
+.pair select{width:78px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.toolbar label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.card-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:10px}
+.title-input{font-size:17px;font-weight:600;flex:1 1 220px}
+.fields{display:flex;flex-wrap:wrap;gap:10px}
+.fields label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.fields input{width:120px}
+.card-foot{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:6px}
+.stat{background:var(--bg);border-radius:10px;padding:8px 10px}
+.stat span{display:block;font-size:12px;color:var(--muted)}
+.stat b{font-size:16px;font-variant-numeric:tabular-nums}
+.stat.good b{color:var(--ok)} .stat.bad b{color:var(--bad)}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.note{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.note.warn{color:var(--warn)}
+.orow{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.orow select{flex:1 1 240px}
+.orow input{width:110px}
+tr.short td{background:var(--bad-bg)}
+.hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+.empty{color:var(--muted);padding:12px 0}
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff;color:#000}
+  .panel{box-shadow:none;border-color:#bbb}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top no-print">
+    <div>
+      <h1>Calculadora de producción</h1>
+      <p class="sub">Ingredientes, fórmulas, costos, inventario y pedidos de aceites capilares</p>
+    </div>
+    <div class="actions">
+      <label>Moneda <input id="cur" size="5" aria-label="Símbolo de moneda"></label>
+      <button id="btn-export" title="Descarga un archivo JSON con todos tus datos: precios, stock, pedidos y muestras">Exportar respaldo</button>
+      <button id="btn-share" title="Descarga un JSON solo con ingredientes y fórmulas, sin precios, stock ni pedidos">Compartir fórmulas</button>
+      <button id="btn-import" title="Abre un JSON exportado desde esta app">Importar</button>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+      <button id="btn-reset" class="danger" title="Reemplaza todo por las fórmulas de ejemplo">Cargar ejemplo</button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <nav class="tabs no-print" role="tablist">
+    <button role="tab" data-tab="ing" aria-selected="true">1. Ingredientes</button>
+    <button role="tab" data-tab="prod" aria-selected="false">2. Productos y fórmulas</button>
+    <button role="tab" data-tab="orden" aria-selected="false">3. Pedido de producción</button>
+    <button role="tab" data-tab="cap" aria-selected="false">4. Para cuánto alcanza</button>
+    <button role="tab" data-tab="mues" aria-selected="false">5. Sobres y muestras</button>
+  </nav>
+
+  <!-- INGREDIENTES -->
+  <section id="tab-ing">
+    <div class="panel">
+      <h2>Ingredientes</h2>
+      <p class="hint">Escribe lo que pagas por la presentación que compras (ejemplo: 2,500 por 1 galón) y la app calcula el precio por ml. En <b>Stock</b> pon lo que tienes ahora. Si compras en gramos (karité, mentol), elige g o kg: la app lo convierte a ml con la densidad. Para etiquetas, frascos o tapas usa el tipo <b>Unidad</b>: pon el precio del paquete y cuántas unidades trae; no suman al 100 % de la fórmula pero sí cuentan en costos y en la orden de compra.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Ingrediente</th><th>Tipo</th><th>Precio pagado</th><th>Presentación</th><th title="g/ml. Sirve para convertir pesos a ml y para mostrar gramos al pesar">Densidad</th>
+            <th class="num">Precio por ml / unid.</th><th>Stock disponible</th><th class="num">Stock en ml / unid.</th><th></th>
+          </tr></thead>
+          <tbody id="ing-body"></tbody>
+        </table>
+      </div>
+      <div class="card-foot">
+        <button id="add-ing" class="primary">+ Nuevo ingrediente</button>
+        <button id="add-ing-unit" title="Etiquetas, frascos, tapas… se cuentan por unidad y no entran en el 100 % de la fórmula">+ Nuevo artículo por unidad</button>
+        <button id="load-prices" title="Pone tus precios de AICA, Amazon, Bravo y eBay (32 oz) en los ingredientes que coincidan por nombre">Cargar mi lista de precios (32 oz)</button>
+      </div>
+      <p class="note">La densidad es aproximada (aceites ≈ 0,92 g/ml). Ajústala con la ficha de tu proveedor si quieres pesar con precisión.</p>
+    </div>
+  </section>
+
+  <!-- PRODUCTOS -->
+  <section id="tab-prod" hidden>
+    <div class="toolbar no-print">
+      <div>
+        <h2>Productos y fórmulas</h2>
+        <p class="hint" style="margin:0">Los porcentajes se calculan sobre el volumen (ml) del envase. Cada fórmula debe sumar 100 %. Los artículos por unidad (etiquetas, frascos) van aparte y no cuentan en ese 100 %.</p>
+      </div>
+      <div class="actions">
+        <label>Margen objetivo % <input id="margin" type="number" min="0" max="95" step="1" style="width:80px"></label>
+        <button id="add-prod" class="primary">+ Nuevo producto</button>
+      </div>
+    </div>
+    <div id="prod-list"></div>
+  </section>
+
+  <!-- PEDIDO -->
+  <section id="tab-orden" hidden>
+    <div class="panel no-print">
+      <h2>Pedido de producción</h2>
+      <p class="hint">Agrega uno o varios productos con la cantidad de unidades. La app calcula cuánto necesitas de cada ingrediente, si tu stock alcanza y qué te falta comprar.</p>
+      <div id="order-rows"></div>
+      <div class="card-foot">
+        <button id="add-orow" class="primary">+ Añadir producto al pedido</button>
+        <button id="clear-order">Limpiar pedido</button>
+      </div>
+    </div>
+    <div id="order-result"></div>
+  </section>
+
+  <!-- CAPACIDAD -->
+  <section id="tab-cap" hidden>
+    <div class="panel">
+      <h2>Para cuánto alcanza tu stock</h2>
+      <p class="hint">Cuántas unidades de cada producto puedes fabricar <b>por separado</b> con el stock actual. Los productos comparten ingredientes, así que las cifras no se suman: si fabricas uno, bajan las de los demás.</p>
+      <div id="cap-body"></div>
+    </div>
+  </section>
+
+  <!-- MUESTRAS -->
+  <section id="tab-mues" hidden>
+    <div class="panel no-print">
+      <h2>Sobres y muestras</h2>
+      <p class="hint">Planifica los sobres de prueba: producto, ml por sobre, cuántos sobres y el costo de la bolsa y su etiqueta. La app calcula el costo de cada sobre, lo que necesitas de ingredientes, el costo de un kit con un sobre de cada fila y lo que podrías recuperar en ventas.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Producto</th><th>ml por sobre</th><th>Cantidad de sobres</th><th>Bolsa + etiqueta (c/u)</th><th class="num">Costo por sobre</th><th class="num">Costo total</th><th></th></tr></thead>
+        <tbody id="mues-rows"></tbody>
+      </table></div>
+      <div class="card-foot"><button id="add-srow" class="primary">+ Añadir fila</button></div>
+      <div class="fields" style="margin-top:6px">
+        <label>Conversión esperada % <input type="number" min="0" max="100" step="any" id="s-conv" title="De cada 100 personas que reciben un sobre, cuántas compran el producto completo. Es un supuesto tuyo."></label>
+        <label>Extras por kit (bolsa, tarjeta) <input type="number" min="0" step="any" id="s-kitextra"></label>
+        <label>Precio de venta del kit <input type="number" min="0" step="any" id="s-kitprice"></label>
+      </div>
+    </div>
+    <div id="mues-result"></div>
+  </section>
+</div>
+
+<dialog id="dlg-import" style="max-width:440px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);padding:20px">
+  <h2 id="dlg-title">Importar archivo</h2>
+  <p id="dlg-text" class="hint"></p>
+  <div class="card-foot" style="justify-content:flex-end">
+    <button id="dlg-cancel">Cancelar</button>
+    <button id="dlg-merge" class="primary" title="Añade lo nuevo y conserva tus precios, stock y pedidos">Fusionar</button>
+    <button id="dlg-replace" class="danger" title="Borra lo actual y deja solo lo del archivo">Reemplazar todo</button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+/* ---------- Utilidades ---------- */
+const KEY = 'calcAceites_v1';
+const $ = (s, r = document) => r.querySelector(s);
+const uid = () => 'x' + Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : 0; };
+const nf = (n, d = 2) => isFinite(n) ? n.toLocaleString('es-DO', {minimumFractionDigits: d, maximumFractionDigits: d}) : '—';
+let state;
+const money = (n, d = 2) => `${esc(state.currency)} ${nf(n, d)}`;
+
+const UNITS = {
+  ml:  {label: 'ml',          vol: 1},
+  L:   {label: 'L',           vol: 1000},
+  gal: {label: 'gal', vol: 3785.41},
+  floz:{label: 'fl oz',       vol: 29.5735},
+  g:   {label: 'g',           mass: 1},
+  kg:  {label: 'kg',          mass: 1000},
+  oz:  {label: 'oz (peso)',   mass: 28.3495},
+  lb:  {label: 'lb',          mass: 453.592}
+};
+const unitOptions = sel => Object.entries(UNITS).map(([k, u]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${u.label}</option>`).join('');
+const DEF_DENS = 0.92;
+const normName = s => String(s ?? '').trim().toLowerCase();
+
+/* Lista de precios del usuario: cada precio es por 32 oz (líquidos en fl oz, sólidos en oz de peso). */
+const PRICE_LIST = [
+  {name: 'Aceite de aguacate', store: 'AICA', price: 708, unit: 'floz'},
+  {name: 'Aceite de argán', store: 'AICA', price: 1483.5, unit: 'floz'},
+  {name: 'Aceite de batana', store: 'Amazon', price: 1790, unit: 'floz'},
+  {name: 'Aceite de coco', store: 'AICA', price: 696.04, unit: 'floz'},
+  {name: 'Aceite de jojoba', store: 'Amazon', price: 1900, unit: 'floz'},
+  {name: 'Aceite de oliva', store: 'Bravo', price: 545, unit: 'floz'},
+  {name: 'Aceite de ricino', aliases: ['Aceite de ricino (Castor)'], store: 'AICA', price: 563.33, unit: 'floz'},
+  {name: 'Aceite de salvado de arroz', store: 'Amazon', price: 1400, unit: 'floz'},
+  {name: 'Aceite esencial de menta piperita', store: 'Amazon', price: 3642.76, unit: 'floz'},
+  {name: 'Aceite esencial de romero', store: 'Amazon', price: 5850, unit: 'floz'},
+  {name: 'Fragancia soluble en aceite, grado cosmético (chicle)', aliases: ['Fragancia soluble en aceite, grado cosmético', 'Fragancia'], store: 'AICA', price: 1429.77, unit: 'floz', density: 0.95},
+  {name: 'Manteca de karité', store: 'AICA', price: 890.9, unit: 'oz'},
+  {name: 'Mentol', store: 'AICA', price: 2400, unit: 'oz'},
+  {name: 'Tocoferol (mixto)', aliases: ['Tocoferol'], store: 'Amazon', price: 2600, unit: 'floz'},
+  {name: 'Vaselina / petrolato cosmético', store: 'AICA', price: 190.31, unit: 'oz', density: 0.85},
+  {name: 'Antioxidante de romero (ROE)', aliases: ['Antioxidante romero', 'Extracto de romero'], store: 'eBay', price: 6754, unit: 'floz', density: 0.95}
+];
+/* Aplica la lista a un arreglo de ingredientes: actualiza los que coinciden por nombre y añade los que faltan. */
+function applyPriceList(ings) {
+  let updated = 0, added = 0;
+  PRICE_LIST.forEach(p => {
+    const keys = [p.name, ...(p.aliases || [])].map(normName);
+    let i = ings.find(x => keys.includes(normName(x.name)));
+    if (!i) {
+      i = {id: uid(), name: p.name, price: 0, qty: 32, unit: p.unit, density: p.density || DEF_DENS, stock: 0, stockUnit: 'ml', store: '', kind: 'vol'};
+      ings.push(i); added++;
+    } else updated++;
+    i.price = p.price; i.qty = 32; i.unit = p.unit; i.store = p.store;
+  });
+  return {updated, added};
+}
+
+function toMl(q, unit, dens) {
+  const u = UNITS[unit] || UNITS.ml; q = num(q);
+  if (u.vol) return q * u.vol;
+  return q * u.mass / (num(dens) || DEF_DENS);
+}
+function fromMl(ml, unit, dens) {
+  const u = UNITS[unit] || UNITS.ml;
+  if (u.vol) return ml / u.vol;
+  return ml * (num(dens) || DEF_DENS) / u.mass;
+}
+
+/* ---------- Datos ---------- */
+function seedState() {
+  const mk = (name, dens, qty, unit) => ({id: uid(), name, price: 0, qty, unit, density: dens, stock: 0, stockUnit: 'ml', store: '', kind: 'vol'});
+  const I = {
+    cocoF:  mk('Aceite de coco fraccionado', 0.94, 1, 'L'),
+    coco:   mk('Aceite de coco', 0.92, 1, 'L'),
+    agua:   mk('Aceite de aguacate', 0.92, 1, 'L'),
+    jojo:   mk('Aceite de jojoba', 0.87, 1, 'L'),
+    oliva:  mk('Aceite de oliva', 0.91, 1, 'L'),
+    ricino: mk('Aceite de ricino', 0.96, 1, 'L'),
+    arroz:  mk('Aceite de salvado de arroz', 0.92, 1, 'L'),
+    uva:    mk('Aceite de semilla de uva', 0.92, 1, 'L'),
+    argan:  mk('Aceite de argán', 0.92, 100, 'ml'),
+    batana: mk('Aceite de batana', 0.92, 100, 'ml'),
+    karite: mk('Manteca de karité', 0.91, 1, 'kg'),
+    toco:   mk('Tocoferol (mixto)', 0.95, 100, 'ml'),
+    benjui: mk('Benjuí (aroma)', 1.05, 30, 'ml'),
+    romero: mk('Aceite esencial de romero', 0.9, 30, 'ml'),
+    jengi:  mk('Aceite esencial de jengibre', 0.89, 30, 'ml'),
+    menta:  mk('Aceite esencial de menta piperita', 0.9, 30, 'ml'),
+    mentol: mk('Mentol', 0.89, 100, 'g')
+  };
+  const P = (name, lines) => ({id: uid(), name, size: 100, extra: 0, price: 0, lines: lines.map(([k, pct]) => ({ing: I[k].id, pct})), units: []});
+  const products = [
+    P('Aceite nutritivo de uso diario', [['cocoF',50.1],['agua',18],['jojo',12],['oliva',12],['ricino',7],['toco',0.5],['benjui',0.4]]),
+    P('Aceite de protección', [['cocoF',39.7],['oliva',18],['arroz',15],['jojo',12],['ricino',6],['uva',5],['argan',3],['toco',1],['benjui',0.3]]),
+    P('Aceite de fortalecimiento capilar', [['cocoF',50],['oliva',15],['jojo',15],['arroz',10],['ricino',8],['toco',0.5],['romero',0.9],['jengi',0.3],['menta',0.15],['mentol',0.15]]),
+    P('Aceite nutritivo intensivo', [['coco',32.5],['oliva',20],['agua',15],['ricino',10],['batana',8],['argan',8],['karite',5],['toco',1],['benjui',0.5]])
+  ];
+  const S = (i, ml, qty) => ({pid: products[i].id, ml, qty, pack: 0});
+  const ings = Object.values(I); applyPriceList(ings);
+  return {currency: 'RD$', margin: 60, ingredients: ings, products, order: [],
+          samples: {rows: [S(0, 5, 300), S(1, 5, 200), S(2, 3, 100), S(3, 10, 150)], conv: 8, kitExtra: 0, kitPrice: 0}};
+}
+
+function validState(s) {
+  return s && typeof s === 'object' && Array.isArray(s.ingredients) && Array.isArray(s.products) && Array.isArray(s.order);
+}
+function sanitize(s) {
+  s.currency = typeof s.currency === 'string' && s.currency ? s.currency.slice(0, 6) : 'RD$';
+  s.margin = Math.min(95, num(s.margin) || 60);
+  s.ingredients = s.ingredients.map(i => ({
+    id: String(i.id || uid()), name: String(i.name || ''), price: num(i.price), qty: num(i.qty) || 1,
+    kind: i.kind === 'unit' ? 'unit' : 'vol', unit: UNITS[i.unit] ? i.unit : 'ml', density: num(i.density) || DEF_DENS, stock: num(i.stock), store: String(i.store || '').slice(0, 40),
+    stockUnit: UNITS[i.stockUnit] ? i.stockUnit : 'ml'
+  }));
+  s.products = s.products.map(p => ({
+    id: String(p.id || uid()), name: String(p.name || ''), size: num(p.size) || 100, extra: num(p.extra), price: num(p.price),
+    lines: (Array.isArray(p.lines) ? p.lines : []).map(l => ({ing: String(l.ing || ''), pct: num(l.pct)})),
+    units: (Array.isArray(p.units) ? p.units : []).map(l => ({ing: String(l.ing || ''), qty: num(l.qty)}))
+  }));
+  s.order = s.order.map(r => ({pid: String(r.pid || ''), units: num(r.units)}));
+  const sm = s.samples && typeof s.samples === 'object' ? s.samples : {};
+  s.samples = {
+    rows: (Array.isArray(sm.rows) ? sm.rows : []).map(r => ({pid: String(r.pid || ''), ml: num(r.ml), qty: num(r.qty), pack: num(r.pack)})),
+    conv: Math.min(100, num(sm.conv)), kitExtra: num(sm.kitExtra), kitPrice: num(sm.kitPrice)
+  };
+  return s;
+}
+
+let storageOK = true;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { storageOK = false; updateBanner(); }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    return validState(s) ? sanitize(s) : null;
+  } catch (e) { return null; }
+}
+
+/* ---------- Cálculos ---------- */
+const ingById = id => state.ingredients.find(i => i.id === id);
+const prodById = id => state.products.find(p => p.id === id);
+/* Los ingredientes de tipo «unidad» (etiquetas, frascos…) usan unidades como base en lugar de ml. */
+const isUnit = i => !!i && i.kind === 'unit';
+const baseLbl = i => isUnit(i) ? 'unid.' : 'ml';
+const presMl = i => isUnit(i) ? num(i.qty) : toMl(i.qty, i.unit, i.density);
+const pricePerMl = i => { const m = presMl(i); return m > 0 && i.price > 0 ? i.price / m : 0; };
+const stockMl = i => isUnit(i) ? num(i.stock) : toMl(i.stock, i.stockUnit, i.density);
+
+function productCost(p) {
+  let costMl = 0, sum = 0; const missing = [];
+  p.lines.forEach(l => {
+    const pct = num(l.pct); sum += pct;
+    const i = ingById(l.ing);
+    if (!i || pct <= 0) return;
+    const ppm = pricePerMl(i);
+    if (!(ppm > 0)) missing.push(i.name || '(sin nombre)');
+    costMl += pct / 100 * ppm;
+  });
+  let costUnits = 0;
+  (p.units || []).forEach(l => {
+    const q = num(l.qty); const i = ingById(l.ing);
+    if (!i || q <= 0) return;
+    const ppu = pricePerMl(i);
+    if (!(ppu > 0)) missing.push(i.name || '(sin nombre)');
+    costUnits += q * ppu;
+  });
+  const costIng = costMl * p.size + costUnits;
+  return {sum, costMl, costUnits, costIng, total: costIng + num(p.extra), missing};
+}
+
+function capacity(p) {
+  let min = Infinity, lim = null;
+  p.lines.forEach(l => {
+    if (!(l.pct > 0)) return;
+    const i = ingById(l.ing); if (!i) return;
+    const perUnit = p.size * l.pct / 100;
+    const u = stockMl(i) / perUnit;
+    if (u < min) { min = u; lim = i; }
+  });
+  (p.units || []).forEach(l => {
+    if (!(l.qty > 0)) return;
+    const i = ingById(l.ing); if (!i) return;
+    const u = stockMl(i) / l.qty;
+    if (u < min) { min = u; lim = i; }
+  });
+  return {units: isFinite(min) ? Math.floor(min + 1e-9) : 0, lim};
+}
+
+function computeOrder() {
+  const byProd = new Map();
+  state.order.forEach(r => {
+    const u = Math.floor(num(r.units));
+    if (u > 0 && prodById(r.pid)) byProd.set(r.pid, (byProd.get(r.pid) || 0) + u);
+  });
+  const need = new Map(); const prodRows = [];
+  let totalUnits = 0, totalMl = 0, extras = 0, revenue = 0, allPriced = byProd.size > 0;
+  const badSum = [];
+  byProd.forEach((u, pid) => {
+    const p = prodById(pid); const c = productCost(p);
+    const ml = u * p.size; totalUnits += u; totalMl += ml; extras += u * num(p.extra);
+    if (!(p.price > 0)) allPriced = false; else revenue += u * p.price;
+    if (Math.abs(c.sum - 100) > 0.005) badSum.push(`${p.name} (${nf(c.sum)} %)`);
+    p.lines.forEach(l => {
+      if (l.pct > 0 && ingById(l.ing)) need.set(l.ing, (need.get(l.ing) || 0) + ml * l.pct / 100);
+    });
+    (p.units || []).forEach(l => {
+      if (l.qty > 0 && ingById(l.ing)) need.set(l.ing, (need.get(l.ing) || 0) + u * l.qty);
+    });
+    prodRows.push({p, u, ml, unitCost: c.total, total: u * c.total});
+  });
+  return {prodRows, totalUnits, totalMl, extras, revenue, allPriced, badSum, ...buildIngRows(need)};
+}
+
+/* Dado un mapa ingrediente → ml necesarios, compara con el stock y calcula las compras. */
+function buildIngRows(need) {
+  const ingRows = []; let ingCost = 0, buyCost = 0, ratio = Infinity; const missingPrices = [];
+  need.forEach((ml, id) => {
+    const i = ingById(id); const stock = stockMl(i); const ppm = pricePerMl(i);
+    if (!(ppm > 0)) missingPrices.push(i.name || '(sin nombre)');
+    ingCost += ml * ppm;
+    const diff = stock - ml; const short = diff < -1e-9;
+    const pm = presMl(i); let packs = 0, cost = 0;
+    if (short && pm > 0) { packs = Math.ceil((-diff) / pm - 1e-9); cost = packs * i.price; buyCost += cost; }
+    if (ml > 0) ratio = Math.min(ratio, stock / ml);
+    ingRows.push({i, ml, grams: isUnit(i) ? null : ml * (num(i.density) || DEF_DENS), stock, diff, short, packs, cost});
+  });
+  ingRows.sort((a, b) => b.ml - a.ml);
+  return {ingRows, ingCost, buyCost, ratio: isFinite(ratio) ? ratio : 0, missingPrices, shortCount: ingRows.filter(r => r.short).length};
+}
+
+/* ---------- Banner ---------- */
+function updateBanner() {
+  const b = $('#banner'); const parts = [];
+  if (!storageOK) parts.push('<div class="banner warn">Este navegador no permite guardar automáticamente. Usa <b>Exportar respaldo</b> para no perder tus datos.</div>');
+  if (state.ingredients.length && state.ingredients.every(i => !(i.price > 0)))
+    parts.push('<div class="banner">Cargué tus 4 fórmulas de ejemplo. Falta que escribas el <b>precio</b> y el <b>stock</b> de cada ingrediente en la pestaña 1, y el tamaño del envase en la pestaña 2 (por defecto 100 ml).</div>');
+  b.innerHTML = parts.join('');
+}
+
+/* ---------- Pestañas ---------- */
+const renderers = {ing: renderIng, prod: renderProd, orden: renderOrder, cap: renderCap, mues: renderSamples};
+function showTab(name) {
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  Object.keys(renderers).forEach(t => { $('#tab-' + t).hidden = t !== name; });
+  renderers[name]();
+  try { sessionStorage.setItem('calcTab', name); } catch (e) {}
+}
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab);
+});
+
+/* ---------- 1. Ingredientes ---------- */
+function ingRowHtml(i) {
+  return `<tr data-id="${i.id}">
+    <td><input data-f="name" value="${esc(i.name)}" placeholder="Nombre" aria-label="Nombre del ingrediente" style="min-width:170px;width:100%">
+      <input data-f="store" value="${esc(i.store)}" placeholder="Dónde comprar" aria-label="Dónde comprar" style="min-width:170px;width:100%;margin-top:4px;font-size:12px;padding:3px 7px"></td>
+    <td><select data-f="kind" aria-label="Tipo de ingrediente" style="width:92px"><option value="vol"${isUnit(i) ? '' : ' selected'}>Líquido / sólido</option><option value="unit"${isUnit(i) ? ' selected' : ''}>Unidad</option></select></td>
+    <td><input type="number" min="0" step="any" data-f="price" value="${i.price || ''}" placeholder="0" aria-label="Precio pagado" style="min-width:80px"></td>
+    <td>${isUnit(i)
+      ? `<div class="pair"><input type="number" min="0" step="any" data-f="qty" value="${i.qty || ''}" aria-label="Unidades por paquete"><span class="sub" style="align-self:center">unid. por paquete</span></div>`
+      : `<div class="pair"><input type="number" min="0" step="any" data-f="qty" value="${i.qty || ''}" aria-label="Cantidad de la presentación"><select data-f="unit" aria-label="Unidad de la presentación">${unitOptions(i.unit)}</select></div>`}</td>
+    <td>${isUnit(i) ? '<span class="sub">—</span>' : `<input type="number" min="0" step="any" data-f="density" value="${i.density || ''}" aria-label="Densidad g/ml" style="width:80px">`}</td>
+    <td class="num" data-c="ppm"></td>
+    <td>${isUnit(i)
+      ? `<div class="pair"><input type="number" min="0" step="any" data-f="stock" value="${i.stock || ''}" placeholder="0" aria-label="Stock disponible en unidades"><span class="sub" style="align-self:center">unid.</span></div>`
+      : `<div class="pair"><input type="number" min="0" step="any" data-f="stock" value="${i.stock || ''}" placeholder="0" aria-label="Stock disponible"><select data-f="stockUnit" aria-label="Unidad del stock">${unitOptions(i.stockUnit)}</select></div>`}</td>
+    <td class="num" data-c="stockml"></td>
+    <td><button class="icon danger" data-act="del" title="Eliminar ingrediente" aria-label="Eliminar ingrediente">✕</button></td>
+  </tr>`;
+}
+function updateIngRow(tr, i) {
+  const ppm = pricePerMl(i);
+  tr.querySelector('[data-c=ppm]').innerHTML = ppm > 0 ? `${money(ppm, isUnit(i) ? 2 : 4)}${isUnit(i) ? ' /unid.' : ''}` : '<span class="pill warn">sin precio</span>';
+  tr.querySelector('[data-c=stockml]').textContent = isUnit(i) ? `${nf(stockMl(i), 0)} unid.` : `${nf(stockMl(i), 1)} ml`;
+}
+function renderIng() {
+  const body = $('#ing-body');
+  body.innerHTML = state.ingredients.map(ingRowHtml).join('') ||
+    '<tr><td colspan="9" class="empty">Aún no hay ingredientes. Pulsa «Nuevo ingrediente».</td></tr>';
+  body.querySelectorAll('tr[data-id]').forEach(tr => updateIngRow(tr, ingById(tr.dataset.id)));
+}
+function onIngEdit(e) {
+  const tr = e.target.closest('tr[data-id]'); const f = e.target.dataset.f; if (!tr || !f) return;
+  const i = ingById(tr.dataset.id);
+  i[f] = (f === 'name' || f === 'store' || f === 'unit' || f === 'stockUnit' || f === 'kind') ? e.target.value : num(e.target.value);
+  if (f === 'kind') { save(); renderIng(); updateBanner(); return; }
+  updateIngRow(tr, i); save(); updateBanner();
+}
+$('#ing-body').addEventListener('input', onIngEdit);
+$('#ing-body').addEventListener('change', onIngEdit);
+$('#ing-body').addEventListener('click', e => {
+  if (e.target.dataset.act !== 'del') return;
+  const tr = e.target.closest('tr'); const i = ingById(tr.dataset.id);
+  const used = state.products.filter(p => p.lines.some(l => l.ing === i.id) || p.units.some(l => l.ing === i.id)).map(p => p.name);
+  const msg = used.length ? `«${i.name}» se usa en: ${used.join(', ')}.\nSe quitará de esas fórmulas. ¿Eliminar?` : `¿Eliminar «${i.name || 'este ingrediente'}»?`;
+  if (!confirm(msg)) return;
+  state.ingredients = state.ingredients.filter(x => x.id !== i.id);
+  state.products.forEach(p => { p.lines = p.lines.filter(l => l.ing !== i.id); p.units = p.units.filter(l => l.ing !== i.id); });
+  save(); renderIng();
+});
+$('#add-ing').addEventListener('click', () => {
+  state.ingredients.push({id: uid(), name: '', price: 0, qty: 1, unit: 'L', density: DEF_DENS, stock: 0, stockUnit: 'ml', store: '', kind: 'vol'});
+  save(); renderIng();
+  const rows = document.querySelectorAll('#ing-body tr[data-id]'); rows[rows.length - 1].querySelector('input').focus();
+});
+
+$('#add-ing-unit').addEventListener('click', () => {
+  state.ingredients.push({id: uid(), name: '', price: 0, qty: 100, unit: 'ml', density: DEF_DENS, stock: 0, stockUnit: 'ml', store: '', kind: 'unit'});
+  save(); renderIng();
+  const rows = document.querySelectorAll('#ing-body tr[data-id]'); rows[rows.length - 1].querySelector('input').focus();
+});
+
+$('#load-prices').addEventListener('click', () => {
+  if (!confirm('Se pondrán los precios de tu lista (por 32 oz) y el lugar de compra en los ingredientes que coincidan por nombre, y se añadirán los que no existan. Esto reemplaza los precios que tengas en esos ingredientes. ¿Continuar?')) return;
+  const r = applyPriceList(state.ingredients); save(); renderIng(); updateBanner();
+  const sin = state.ingredients.filter(i => !(i.price > 0)).map(i => i.name || '(sin nombre)');
+  alert(`Listo: ${r.updated} ingredientes actualizados y ${r.added} añadidos.` + (sin.length ? `\n\nSiguen sin precio: ${sin.join(', ')}.` : ''));
+});
+
+/* ---------- 2. Productos ---------- */
+function unitRowHtml(l) {
+  const opts = ['<option value="">— elegir artículo —</option>'].concat(
+    state.ingredients.filter(i => isUnit(i) || i.id === l.ing).map(i => `<option value="${i.id}"${i.id === l.ing ? ' selected' : ''}>${esc(i.name || '(sin nombre)')}</option>`)).join('');
+  return `<tr>
+    <td><select data-f="ing" aria-label="Artículo por unidad" style="min-width:210px;width:100%">${opts}</select></td>
+    <td><input type="number" min="0" step="any" data-f="qty" value="${l.qty || ''}" placeholder="1" aria-label="Unidades por producto" style="width:90px"></td>
+    <td class="num" data-c="cost"></td>
+    <td><button class="icon danger" data-act="delunit" title="Quitar artículo" aria-label="Quitar artículo">✕</button></td>
+  </tr>`;
+}
+function lineRowHtml(l) {
+  const opts = ['<option value="">— elegir ingrediente —</option>'].concat(
+    state.ingredients.filter(i => !isUnit(i) || i.id === l.ing).map(i => `<option value="${i.id}"${i.id === l.ing ? ' selected' : ''}>${esc(i.name || '(sin nombre)')}</option>`)).join('');
+  return `<tr>
+    <td><select data-f="ing" aria-label="Ingrediente" style="min-width:210px;width:100%">${opts}</select></td>
+    <td><input type="number" min="0" step="any" data-f="pct" value="${l.pct || ''}" placeholder="0" aria-label="Porcentaje" style="width:90px"></td>
+    <td class="num" data-c="ml"></td><td class="num" data-c="g"></td><td class="num" data-c="cost"></td>
+    <td><button class="icon danger" data-act="delline" title="Quitar ingrediente" aria-label="Quitar ingrediente">✕</button></td>
+  </tr>`;
+}
+function cardHtml(p) {
+  return `<article class="panel" data-pid="${p.id}">
+    <div class="card-head">
+      <input class="title-input" data-f="name" value="${esc(p.name)}" placeholder="Nombre del producto" aria-label="Nombre del producto">
+      <div class="fields">
+        <label>Envase (ml)<input type="number" min="0" step="any" data-f="size" value="${p.size || ''}"></label>
+        <label title="Envase, tapa, etiqueta, caja…">Extras / unidad<input type="number" min="0" step="any" data-f="extra" value="${p.extra || ''}" placeholder="0"></label>
+        <label>Precio de venta<input type="number" min="0" step="any" data-f="price" value="${p.price || ''}" placeholder="0"></label>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Ingrediente</th><th>%</th><th class="num">ml / unidad</th><th class="num">g / unidad</th><th class="num">Costo / unidad</th><th></th></tr></thead>
+      <tbody data-k="lines">${p.lines.map(lineRowHtml).join('')}</tbody>
+    </table></div>
+    <h3 style="font-size:14px;margin:14px 0 4px">Artículos por unidad <span class="sub">(etiquetas, frascos… no cuentan en el 100 %)</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Artículo</th><th>Cantidad / unidad</th><th class="num">Costo / unidad</th><th></th></tr></thead>
+      <tbody data-k="units">${p.units.map(unitRowHtml).join('')}</tbody>
+    </table></div>
+    <div class="card-foot no-print">
+      <button data-act="addline" class="primary">+ Ingrediente</button>
+      <button data-act="addunit">+ Artículo por unidad</button>
+      <button data-act="dup">Duplicar (ej. versión sobre)</button>
+      <button data-act="delp" class="danger">Eliminar producto</button>
+    </div>
+    <div data-c="stats"></div>
+  </article>`;
+}
+function updateCard(card) {
+  const p = prodById(card.dataset.pid); const c = productCost(p);
+  card.querySelectorAll('tbody[data-k=units] tr').forEach((tr, idx) => {
+    const l = p.units[idx]; if (!l) return;
+    const i = ingById(l.ing); const ppu = i ? pricePerMl(i) : 0;
+    tr.querySelector('[data-c=cost]').textContent = ppu > 0 && l.qty > 0 ? money(l.qty * ppu) : '—';
+  });
+  card.querySelectorAll('tbody[data-k=lines] tr').forEach((tr, idx) => {
+    const l = p.lines[idx]; if (!l) return;
+    const i = ingById(l.ing); const ml = p.size * num(l.pct) / 100;
+    tr.querySelector('[data-c=ml]').textContent = nf(ml, 2);
+    tr.querySelector('[data-c=g]').textContent = i ? nf(ml * (num(i.density) || DEF_DENS), 2) : '—';
+    const ppm = i ? pricePerMl(i) : 0;
+    tr.querySelector('[data-c=cost]').textContent = ppm > 0 ? money(ml * ppm) : '—';
+  });
+  const okSum = Math.abs(c.sum - 100) <= 0.005;
+  const sumPill = okSum ? '<span class="pill ok">Suma 100 %</span>'
+    : `<span class="pill bad">Suma ${nf(c.sum)} % · ${c.sum > 100 ? 'sobran' : 'faltan'} ${nf(Math.abs(100 - c.sum))} %</span>`;
+  const cap = capacity(p);
+  const hasCost = c.total > 0 && c.missing.length === 0;
+  let margin = '—', cls = '', sugg = '—';
+  if (c.total > 0) sugg = money(c.total / (1 - Math.min(95, state.margin) / 100));
+  if (p.price > 0 && c.total > 0) { const m = (p.price - c.total) / p.price * 100; margin = `${nf(m, 1)} %`; cls = m >= state.margin ? 'good' : (m < 0 ? 'bad' : ''); }
+  card.querySelector('[data-c=stats]').innerHTML = `
+    <div style="margin:4px 0 8px">${sumPill}</div>
+    <div class="stats">
+      <div class="stat"><span>Costo por ml</span><b>${c.costMl > 0 ? money(c.costMl, 4) : '—'}</b></div>
+      <div class="stat"><span>Ingredientes / unidad</span><b>${c.costIng > 0 ? money(c.costIng) : '—'}</b></div>
+      <div class="stat"><span>Costo total / unidad</span><b>${c.total > 0 ? money(c.total) : '—'}</b></div>
+      <div class="stat"><span>Precio sugerido (${nf(state.margin, 0)} % margen)</span><b>${sugg}</b></div>
+      <div class="stat ${cls}"><span>Margen con tu precio</span><b>${margin}</b></div>
+      <div class="stat"><span>Alcanza para</span><b>${cap.units} unid.</b>${cap.lim && cap.units < 1000 ? `<span>limita: ${esc(cap.lim.name)}</span>` : ''}</div>
+    </div>
+    ${c.missing.length ? `<p class="note warn">Faltan precios de: ${esc([...new Set(c.missing)].join(', '))}. El costo está incompleto.</p>` : ''}`;
+}
+function renderProd() {
+  const list = $('#prod-list');
+  list.innerHTML = state.products.map(cardHtml).join('') || '<div class="panel empty">Aún no hay productos. Pulsa «Nuevo producto».</div>';
+  list.querySelectorAll('article').forEach(updateCard);
+  $('#margin').value = state.margin;
+}
+function onProdEdit(e) {
+  const card = e.target.closest('article[data-pid]'); const f = e.target.dataset.f; if (!card || !f) return;
+  const p = prodById(card.dataset.pid); const tr = e.target.closest('tbody tr');
+  if (tr) {
+    const arr = tr.parentNode.dataset.k === 'units' ? p.units : p.lines;
+    const l = arr[[...tr.parentNode.children].indexOf(tr)];
+    l[f] = f === 'ing' ? e.target.value : num(e.target.value);
+  } else p[f] = f === 'name' ? e.target.value : num(e.target.value);
+  updateCard(card); save();
+}
+$('#prod-list').addEventListener('input', onProdEdit);
+$('#prod-list').addEventListener('change', onProdEdit);
+$('#prod-list').addEventListener('click', e => {
+  const act = e.target.dataset.act; if (!act) return;
+  const card = e.target.closest('article'); const p = prodById(card.dataset.pid);
+  if (act === 'addline') { p.lines.push({ing: '', pct: 0}); save(); renderProd(); }
+  else if (act === 'addunit') { p.units.push({ing: '', qty: 1}); save(); renderProd(); }
+  else if (act === 'delunit') {
+    const tr = e.target.closest('tr'); p.units.splice([...tr.parentNode.children].indexOf(tr), 1); save(); renderProd();
+  } else if (act === 'delline') {
+    const tr = e.target.closest('tr'); p.lines.splice([...tr.parentNode.children].indexOf(tr), 1); save(); renderProd();
+  } else if (act === 'dup') {
+    const copy = JSON.parse(JSON.stringify(p)); copy.id = uid(); copy.name = p.name + ' (copia)';
+    state.products.splice(state.products.indexOf(p) + 1, 0, copy); save(); renderProd();
+  } else if (act === 'delp') {
+    if (!confirm(`¿Eliminar el producto «${p.name || 'sin nombre'}»?`)) return;
+    state.products = state.products.filter(x => x !== p);
+    state.order = state.order.filter(r => r.pid !== p.id);
+    state.samples.rows = state.samples.rows.filter(r => r.pid !== p.id); save(); renderProd();
+  }
+});
+$('#add-prod').addEventListener('click', () => {
+  state.products.push({id: uid(), name: 'Nuevo producto', size: 100, extra: 0, price: 0, lines: [{ing: '', pct: 0}], units: []});
+  save(); renderProd();
+  const cards = document.querySelectorAll('#prod-list article'); const last = cards[cards.length - 1];
+  last.scrollIntoView({behavior: 'smooth', block: 'start'}); last.querySelector('.title-input').select();
+});
+$('#margin').addEventListener('input', e => {
+  state.margin = Math.min(95, num(e.target.value)); save();
+  document.querySelectorAll('#prod-list article').forEach(updateCard);
+});
+
+/* ---------- 3. Pedido ---------- */
+function renderOrderInputs() {
+  const box = $('#order-rows');
+  if (!state.products.length) { box.innerHTML = '<p class="empty">Primero crea al menos un producto.</p>'; return; }
+  box.innerHTML = state.order.map((r, idx) => `
+    <div class="orow" data-oi="${idx}">
+      <select data-f="pid" aria-label="Producto">
+        <option value="">— elegir producto —</option>
+        ${state.products.map(p => `<option value="${p.id}"${p.id === r.pid ? ' selected' : ''}>${esc(p.name || '(sin nombre)')} · ${nf(p.size, 0)} ml</option>`).join('')}
+      </select>
+      <input type="number" min="0" step="1" data-f="units" value="${r.units || ''}" placeholder="Unidades" aria-label="Unidades">
+      <button class="icon danger" data-act="del" aria-label="Quitar del pedido">✕</button>
+    </div>`).join('') || '<p class="empty">El pedido está vacío. Pulsa «Añadir producto al pedido».</p>';
+}
+function stockBadge(r) {
+  return r.short ? '<span class="pill bad">Falta</span>' : '<span class="pill ok">Alcanza</span>';
+}
+function ingTableHtml(r) {
+  return `<div class="panel">
+      <h2>Ingredientes necesarios</h2>
+      <p class="hint">Lo que debes sacar de tu inventario. En <b>Comprar</b> aparece la presentación completa que tendrías que adquirir.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Ingrediente</th><th class="num">Necesario (ml / unid.)</th><th class="num">Peso (g)</th><th class="num">Stock (ml / unid.)</th><th class="num">Sobra / falta</th><th>Estado</th><th>Comprar</th><th class="num">Costo compra</th></tr></thead>
+        <tbody>${r.ingRows.map(x => `<tr class="${x.short ? 'short' : ''}">
+          <td>${esc(x.i.name)}${isUnit(x.i) ? ' <span class="pill warn">unid.</span>' : ''}</td><td class="num">${isUnit(x.i) ? nf(x.ml, 0) + ' unid.' : nf(x.ml, 1)}</td><td class="num">${x.grams === null ? '—' : nf(x.grams, 1)}</td><td class="num">${isUnit(x.i) ? nf(x.stock, 0) + ' unid.' : nf(x.stock, 1)}</td>
+          <td class="num">${x.diff >= 0 ? '+' : '−'}${isUnit(x.i) ? nf(Math.abs(x.diff), 0) + ' unid.' : nf(Math.abs(x.diff), 1)}</td><td>${stockBadge(x)}</td>
+          <td>${x.short ? (x.packs > 0 ? `${x.packs} × ${nf(x.i.qty, x.i.qty % 1 ? 2 : 0)} ${isUnit(x.i) ? 'unid.' : UNITS[x.i.unit].label}` : 'define presentación') + (x.i.store ? ` <span class="sub">· ${esc(x.i.store)}</span>` : '') : '—'}</td>
+          <td class="num">${x.short && x.cost > 0 ? money(x.cost) : '—'}</td></tr>`).join('')}
+        </tbody>
+        ${r.shortCount ? `<tfoot><tr><td colspan="7" style="text-align:right"><b>Total a comprar</b></td><td class="num"><b>${money(r.buyCost)}</b></td></tr></tfoot>` : ''}
+      </table></div>
+    </div>`;
+}
+function renderOrderResult() {
+  const box = $('#order-result'); const r = computeOrder();
+  if (!r.prodRows.length) { box.innerHTML = '<div class="panel no-print"><p class="empty" style="margin:0">Elige productos y unidades para ver lo que necesitas.</p></div>'; return; }
+  const totalCost = r.ingCost + r.extras;
+  const ok = r.shortCount === 0;
+  const warns = [];
+  if (r.badSum.length) warns.push(`Estas fórmulas no suman 100 %: ${esc(r.badSum.join('; '))}. Los cálculos usan lo que hay escrito.`);
+  if (r.missingPrices.length) warns.push(`Faltan precios de: ${esc(r.missingPrices.join(', '))}. El costo está incompleto.`);
+  const ratioTxt = r.ratio >= 1 ? `${nf(r.ratio, 1)}× este pedido` : `Solo ${nf(r.ratio * 100, 0)} % de este pedido`;
+  box.innerHTML = `
+    <div class="panel">
+      <h2>Resumen del pedido</h2>
+      <div class="stats">
+        <div class="stat"><span>Unidades totales</span><b>${nf(r.totalUnits, 0)}</b></div>
+        <div class="stat"><span>Volumen total</span><b>${r.totalMl >= 1000 ? nf(r.totalMl / 1000, 2) + ' L' : nf(r.totalMl, 0) + ' ml'}</b></div>
+        <div class="stat"><span>Costo de producción</span><b>${money(totalCost)}</b></div>
+        <div class="stat"><span>Costo promedio / unidad</span><b>${money(totalCost / r.totalUnits)}</b></div>
+        <div class="stat ${ok ? 'good' : 'bad'}"><span>Con tu stock actual</span><b>${ok ? 'Alcanza' : `Faltan ${r.shortCount} ingred.`}</b></div>
+        <div class="stat"><span>Tu stock da para</span><b>${ratioTxt}</b></div>
+        <div class="stat"><span>Inversión de compra</span><b>${r.shortCount ? money(r.buyCost) : money(0)}</b></div>
+        ${r.allPriced ? `<div class="stat ${r.revenue - totalCost >= 0 ? 'good' : 'bad'}"><span>Ganancia estimada</span><b>${money(r.revenue - totalCost)}</b></div>` : ''}
+      </div>
+      ${warns.map(w => `<p class="note warn">${w}</p>`).join('')}
+    </div>
+
+    ${ingTableHtml(r)}
+
+    <div class="panel">
+      <h2>Costo por producto</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Producto</th><th class="num">Unidades</th><th class="num">Volumen</th><th class="num">Costo / unidad</th><th class="num">Costo total</th><th class="num">Precio de venta</th></tr></thead>
+        <tbody>${r.prodRows.map(x => `<tr><td>${esc(x.p.name)}</td><td class="num">${nf(x.u, 0)}</td><td class="num">${nf(x.ml, 0)} ml</td>
+          <td class="num">${money(x.unitCost)}</td><td class="num">${money(x.total)}</td><td class="num">${x.p.price > 0 ? money(x.p.price) : '—'}</td></tr>`).join('')}
+        </tbody>
+      </table></div>
+      <div class="card-foot no-print">
+        <button id="btn-produce" class="primary" ${ok ? '' : 'disabled title="Primero completa el stock faltante"'}>Producir: descontar del inventario</button>
+        <button id="btn-print">Imprimir hoja de producción</button>
+      </div>
+    </div>`;
+}
+function renderOrder() { renderOrderInputs(); renderOrderResult(); }
+function onOrderEdit(e) {
+  const row = e.target.closest('.orow'); const f = e.target.dataset.f; if (!row || !f) return;
+  const r = state.order[+row.dataset.oi];
+  r[f] = f === 'pid' ? e.target.value : num(e.target.value);
+  save(); renderOrderResult();
+}
+$('#order-rows').addEventListener('input', onOrderEdit);
+$('#order-rows').addEventListener('change', onOrderEdit);
+$('#order-rows').addEventListener('click', e => {
+  if (e.target.dataset.act !== 'del') return;
+  state.order.splice(+e.target.closest('.orow').dataset.oi, 1); save(); renderOrder();
+});
+$('#add-orow').addEventListener('click', () => { state.order.push({pid: '', units: 0}); save(); renderOrder(); });
+$('#clear-order').addEventListener('click', () => { state.order = []; save(); renderOrder(); });
+$('#order-result').addEventListener('click', e => {
+  if (e.target.id === 'btn-print') window.print();
+  if (e.target.id === 'btn-produce') produce();
+});
+function produce() {
+  const r = computeOrder();
+  if (r.shortCount) return;
+  if (!confirm(`Se descontarán del inventario los ingredientes de ${nf(r.totalUnits, 0)} unidades. ¿Continuar?`)) return;
+  deductStock(r.ingRows);
+  save(); renderOrderResult();
+}
+
+/* ---------- 4. Capacidad ---------- */
+function renderCap() {
+  const box = $('#cap-body');
+  if (!state.products.length) { box.innerHTML = '<p class="empty">Aún no hay productos.</p>'; return; }
+  box.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Producto</th><th class="num">Envase</th><th class="num">Unidades posibles</th><th class="num">Volumen</th><th>Ingrediente que limita</th><th class="num">Costo / unidad</th></tr></thead>
+    <tbody>${state.products.map(p => {
+      const c = capacity(p); const cost = productCost(p);
+      return `<tr><td>${esc(p.name)}</td><td class="num">${nf(p.size, 0)} ml</td>
+        <td class="num"><b>${c.units}</b></td><td class="num">${nf(c.units * p.size, 0)} ml</td>
+        <td>${c.lim ? esc(c.lim.name) : '—'}</td><td class="num">${cost.total > 0 ? money(cost.total) : '—'}</td></tr>`;
+    }).join('')}</tbody></table></div>
+    <p class="note">«Unidades posibles» usa el stock que escribiste en la pestaña de ingredientes. Si el stock está en 0, el resultado será 0.</p>`;
+}
+
+/* ---------- 5. Sobres y muestras ---------- */
+function sampleCost(r) {
+  const p = prodById(r.pid); if (!p) return null;
+  const c = productCost(p);
+  const per = c.costMl * num(r.ml) + num(r.pack);
+  return {p, c, per, total: per * Math.floor(num(r.qty))};
+}
+function computeSamples() {
+  const sm = state.samples; const need = new Map(); const rows = [];
+  let sachets = 0, ml = 0, packTotal = 0, kitCost = num(sm.kitExtra), kits = Infinity, sold = 0, revenue = 0, allPriced = true;
+  sm.rows.forEach(r => {
+    const qty = Math.floor(num(r.qty)); const x = sampleCost(r);
+    if (!x || !(r.ml > 0) || qty <= 0) return;
+    const rowMl = qty * r.ml; sachets += qty; ml += rowMl; packTotal += qty * num(r.pack);
+    kitCost += x.per; kits = Math.min(kits, qty);
+    const s = qty * num(sm.conv) / 100; sold += s;
+    if (x.p.price > 0) revenue += s * x.p.price; else allPriced = false;
+    x.p.lines.forEach(l => { if (l.pct > 0 && ingById(l.ing)) need.set(l.ing, (need.get(l.ing) || 0) + rowMl * l.pct / 100); });
+    rows.push({r, x, qty});
+  });
+  const ib = buildIngRows(need);
+  const invest = ib.ingCost + packTotal;
+  return {rows, sachets, ml, packTotal, kitCost, kits: isFinite(kits) ? kits : 0, sold, revenue, allPriced, invest, ...ib};
+}
+function renderSamples() {
+  const sm = state.samples;
+  $('#s-conv').value = sm.conv || ''; $('#s-kitextra').value = sm.kitExtra || ''; $('#s-kitprice').value = sm.kitPrice || '';
+  const body = $('#mues-rows');
+  if (!state.products.length) {
+    body.innerHTML = '<tr><td colspan="7" class="empty">Primero crea al menos un producto.</td></tr>'; $('#mues-result').innerHTML = ''; return;
+  }
+  body.innerHTML = sm.rows.map((r, idx) => `<tr data-si="${idx}">
+    <td><select data-f="pid" aria-label="Producto" style="min-width:220px;width:100%"><option value="">— elegir producto —</option>${state.products.map(p => `<option value="${p.id}"${p.id === r.pid ? ' selected' : ''}>${esc(p.name || '(sin nombre)')}</option>`).join('')}</select></td>
+    <td><input type="number" min="0" step="any" data-f="ml" value="${r.ml || ''}" placeholder="5" aria-label="ml por sobre" style="width:90px"></td>
+    <td><input type="number" min="0" step="1" data-f="qty" value="${r.qty || ''}" placeholder="0" aria-label="Cantidad de sobres" style="width:100px"></td>
+    <td><input type="number" min="0" step="any" data-f="pack" value="${r.pack || ''}" placeholder="0" aria-label="Costo de bolsa y etiqueta" style="width:110px"></td>
+    <td class="num" data-c="per"></td><td class="num" data-c="tot"></td>
+    <td><button class="icon danger" data-act="del" aria-label="Quitar fila">✕</button></td></tr>`).join('') ||
+    '<tr><td colspan="7" class="empty">Sin filas. Pulsa «Añadir fila».</td></tr>';
+  body.querySelectorAll('tr[data-si]').forEach(updateSampleRow);
+  renderSampleResult();
+}
+function updateSampleRow(tr) {
+  const r = state.samples.rows[+tr.dataset.si]; const x = sampleCost(r);
+  tr.querySelector('[data-c=per]').textContent = x && x.per > 0 ? money(x.per) : '—';
+  tr.querySelector('[data-c=tot]').textContent = x && x.total > 0 ? money(x.total) : '—';
+}
+function renderSampleResult() {
+  const box = $('#mues-result'); const r = computeSamples(); const sm = state.samples;
+  if (!r.rows.length) { box.innerHTML = '<div class="panel"><p class="empty" style="margin:0">Completa al menos una fila con producto, ml por sobre y cantidad.</p></div>'; return; }
+  const ok = r.shortCount === 0;
+  const warns = [];
+  if (r.missingPrices.length) warns.push(`Faltan precios de: ${esc(r.missingPrices.join(', '))}. El costo está incompleto.`);
+  const kitMargin = sm.kitPrice > 0 && r.kitCost > 0 ? (sm.kitPrice - r.kitCost) / sm.kitPrice * 100 : null;
+  const result = r.revenue - r.invest;
+  box.innerHTML = `
+    <div class="panel">
+      <h2>Resumen de muestras</h2>
+      <div class="stats">
+        <div class="stat"><span>Sobres totales</span><b>${nf(r.sachets, 0)}</b></div>
+        <div class="stat"><span>Volumen total</span><b>${r.ml >= 1000 ? nf(r.ml / 1000, 2) + ' L' : nf(r.ml, 0) + ' ml'}</b></div>
+        <div class="stat"><span>Ingredientes</span><b>${money(r.ingCost)}</b></div>
+        <div class="stat"><span>Bolsas y etiquetas</span><b>${money(r.packTotal)}</b></div>
+        <div class="stat"><span>Inversión total</span><b>${money(r.invest)}</b></div>
+        <div class="stat"><span>Costo promedio / sobre</span><b>${money(r.invest / r.sachets)}</b></div>
+        <div class="stat ${ok ? 'good' : 'bad'}"><span>Con tu stock actual</span><b>${ok ? 'Alcanza' : `Faltan ${r.shortCount} ingred.`}</b></div>
+        <div class="stat"><span>Inversión de compra</span><b>${money(r.shortCount ? r.buyCost : 0)}</b></div>
+      </div>
+      ${warns.map(w => `<p class="note warn">${w}</p>`).join('')}
+    </div>
+
+    <div class="panel">
+      <h2>Kit con un sobre de cada fila</h2>
+      <div class="stats">
+        <div class="stat"><span>Kits que puedes armar</span><b>${nf(r.kits, 0)}</b></div>
+        <div class="stat"><span>Costo por kit</span><b>${money(r.kitCost)}</b></div>
+        <div class="stat"><span>Precio de venta</span><b>${sm.kitPrice > 0 ? money(sm.kitPrice) : '—'}</b></div>
+        <div class="stat ${kitMargin === null ? '' : kitMargin >= 0 ? 'good' : 'bad'}"><span>Margen del kit</span><b>${kitMargin === null ? '—' : nf(kitMargin, 1) + ' %'}</b></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Retorno esperado</h2>
+      <p class="hint">Supuesto: de cada 100 sobres entregados, ${nf(sm.conv, 0)} terminan en compra del producto completo. Cambia ese porcentaje arriba con tus propios datos.</p>
+      <div class="stats">
+        <div class="stat"><span>Ventas esperadas</span><b>${nf(r.sold, 0)} unid.</b></div>
+        <div class="stat"><span>Ingresos esperados</span><b>${r.revenue > 0 ? money(r.revenue) : '—'}</b></div>
+        <div class="stat ${r.revenue > 0 ? (result >= 0 ? 'good' : 'bad') : ''}"><span>Resultado vs. inversión</span><b>${r.revenue > 0 ? money(result) : '—'}</b></div>
+      </div>
+      ${r.allPriced ? '' : '<p class="note warn">Algún producto no tiene precio de venta (pestaña 2). Sus ventas no se cuentan en los ingresos.</p>'}
+      <table style="margin-top:10px">
+        <thead><tr><th>Producto</th><th class="num">Sobres</th><th class="num">ml c/u</th><th class="num">Costo c/u</th><th class="num">Costo total</th><th class="num">Ventas esperadas</th></tr></thead>
+        <tbody>${r.rows.map(w => `<tr><td>${esc(w.x.p.name)}</td><td class="num">${nf(w.qty, 0)}</td><td class="num">${nf(w.r.ml, 1)}</td>
+          <td class="num">${w.x.per > 0 ? money(w.x.per) : '—'}</td><td class="num">${w.x.total > 0 ? money(w.x.total) : '—'}</td>
+          <td class="num">${nf(w.qty * sm.conv / 100, 0)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+
+    ${ingTableHtml(r)}
+    <div class="card-foot no-print">
+      <button id="btn-produce-s" class="primary" ${ok ? '' : 'disabled title="Primero completa el stock faltante"'}>Producir muestras: descontar del inventario</button>
+      <button id="btn-print-s">Imprimir</button>
+    </div>`;
+}
+function onSampleEdit(e) {
+  const tr = e.target.closest('tr[data-si]'); const f = e.target.dataset.f; if (!tr || !f) return;
+  const r = state.samples.rows[+tr.dataset.si];
+  r[f] = f === 'pid' ? e.target.value : num(e.target.value);
+  updateSampleRow(tr); save(); renderSampleResult();
+}
+$('#mues-rows').addEventListener('input', onSampleEdit);
+$('#mues-rows').addEventListener('change', onSampleEdit);
+$('#mues-rows').addEventListener('click', e => {
+  if (e.target.dataset.act !== 'del') return;
+  state.samples.rows.splice(+e.target.closest('tr').dataset.si, 1); save(); renderSamples();
+});
+$('#add-srow').addEventListener('click', () => { state.samples.rows.push({pid: '', ml: 5, qty: 0, pack: 0}); save(); renderSamples(); });
+[['#s-conv', 'conv'], ['#s-kitextra', 'kitExtra'], ['#s-kitprice', 'kitPrice']].forEach(([sel, key]) =>
+  $(sel).addEventListener('input', e => { state.samples[key] = key === 'conv' ? Math.min(100, num(e.target.value)) : num(e.target.value); save(); renderSampleResult(); }));
+$('#mues-result').addEventListener('click', e => {
+  if (e.target.id === 'btn-print-s') window.print();
+  if (e.target.id === 'btn-produce-s') {
+    const r = computeSamples(); if (r.shortCount) return;
+    if (!confirm(`Se descontarán del inventario los ingredientes de ${nf(r.sachets, 0)} sobres. ¿Continuar?`)) return;
+    deductStock(r.ingRows); save(); renderSampleResult();
+  }
+});
+function deductStock(ingRows) {
+  ingRows.forEach(x => {
+    const left = Math.max(0, stockMl(x.i) - x.ml);
+    x.i.stock = Math.round((isUnit(x.i) ? left : fromMl(left, x.i.stockUnit, x.i.density)) * 10000) / 10000;
+  });
+}
+
+/* ---------- Exportar / importar JSON ---------- */
+const stamp = () => new Date().toISOString().slice(0, 10);
+function download(obj, name) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('#btn-export').addEventListener('click', () => download({app: 'calc-aceites', kind: 'backup', version: 2, ...state}, `respaldo-aceites-${stamp()}.json`));
+$('#btn-share').addEventListener('click', () => download({
+  app: 'calc-aceites', kind: 'share', version: 2, currency: state.currency,
+  ingredients: state.ingredients.map(i => ({id: i.id, name: i.name, kind: i.kind, qty: i.qty, unit: i.unit, density: i.density})),
+  products: state.products.map(p => ({id: p.id, name: p.name, size: p.size, lines: p.lines.map(l => ({ing: l.ing, pct: l.pct})), units: p.units.map(l => ({ing: l.ing, qty: l.qty}))})),
+  order: []
+}, `formulas-aceites-${stamp()}.json`));
+
+let pendingImport = null;
+$('#btn-import').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const s = JSON.parse(rd.result);
+      if (!validState(s)) throw new Error('formato');
+      pendingImport = sanitize(s);
+      const share = s.kind === 'share';
+      $('#dlg-title').textContent = share ? 'Importar fórmulas compartidas' : 'Importar respaldo';
+      $('#dlg-text').innerHTML = `El archivo trae <b>${pendingImport.ingredients.length} ingredientes</b> y <b>${pendingImport.products.length} productos</b>${share ? ' (solo fórmulas, sin precios ni stock)' : ''}.<br><br>
+        <b>Fusionar</b>: añade lo que no tengas y conserva tus precios, stock y pedidos.<br>
+        <b>Reemplazar todo</b>: borra tus datos actuales y deja solo lo del archivo.`;
+      $('#dlg-import').showModal();
+    } catch (err) { alert('El archivo no es un JSON válido de esta app.'); }
+  };
+  rd.readAsText(f); e.target.value = '';
+});
+$('#dlg-cancel').addEventListener('click', () => { pendingImport = null; $('#dlg-import').close(); });
+$('#dlg-replace').addEventListener('click', () => {
+  if (!pendingImport) return;
+  state = pendingImport; pendingImport = null; $('#dlg-import').close(); save(); refreshAll();
+});
+$('#dlg-merge').addEventListener('click', () => {
+  if (!pendingImport) return;
+  const d = pendingImport; pendingImport = null; $('#dlg-import').close();
+  const norm = s => String(s).trim().toLowerCase(); const map = new Map(); let addedI = 0, addedP = 0;
+  d.ingredients.forEach(src => {
+    let ex = state.ingredients.find(i => norm(i.name) === norm(src.name));
+    if (!ex) { ex = {...src, id: uid()}; state.ingredients.push(ex); addedI++; }
+    map.set(src.id, ex.id);
+  });
+  const srcName = new Map(d.ingredients.map(i => [i.id, i.name]));
+  const sig = (p, nameOf) => `${norm(p.name)}|${p.size}|` + p.lines.filter(l => l.pct > 0).map(l => `${norm(nameOf(l.ing))}:${l.pct}`).sort().join(',')
+    + '|' + p.units.filter(l => l.qty > 0).map(l => `${norm(nameOf(l.ing))}:${l.qty}`).sort().join(',');
+  const have = new Set(state.products.map(p => sig(p, id => (ingById(id) || {}).name || '')));
+  let skipped = 0;
+  d.products.forEach(src => {
+    if (have.has(sig(src, id => srcName.get(id) || ''))) { skipped++; return; }
+    let name = src.name, n = 1;
+    while (state.products.some(p => norm(p.name) === norm(name))) { n++; name = `${src.name} (importado${n > 2 ? ' ' + (n - 1) : ''})`; }
+    state.products.push({...src, id: uid(), name, lines: src.lines.map(l => ({ing: map.get(l.ing) || '', pct: l.pct})),
+      units: src.units.map(l => ({ing: map.get(l.ing) || '', qty: l.qty}))});
+    addedP++;
+  });
+  save(); refreshAll();
+  alert(`Listo: se añadieron ${addedI} ingredientes nuevos y ${addedP} productos.` +
+    (skipped ? `\n${skipped} producto(s) ya existían con la misma fórmula y no se duplicaron.` : '') +
+    (addedI < d.ingredients.length ? '\nLos ingredientes que ya tenías (mismo nombre) conservaron tus precios y stock.' : ''));
+});
+$('#btn-reset').addEventListener('click', () => {
+  if (!confirm('Se reemplazarán todos tus datos por las 4 fórmulas de ejemplo con tu lista de precios (sin stock ni pedidos). ¿Continuar?')) return;
+  state = seedState(); save(); refreshAll();
+});
+$('#cur').addEventListener('input', e => {
+  state.currency = e.target.value.slice(0, 6) || 'RD$'; save();
+  const active = document.querySelector('.tabs [aria-selected=true]').dataset.tab; renderers[active]();
+});
+
+function refreshAll() {
+  $('#cur').value = state.currency;
+  updateBanner();
+  showTab(document.querySelector('.tabs [aria-selected=true]').dataset.tab);
+}
+
+/* ---------- Inicio ---------- */
+state = load() || seedState();
+if (!localStorage_available()) storageOK = false;
+function localStorage_available() { try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); return true; } catch (e) { return false; } }
+save();
+$('#cur').value = state.currency;
+updateBanner();
+let startTab = 'ing'; try { startTab = sessionStorage.getItem('calcTab') || 'ing'; } catch (e) {}
+showTab(renderers[startTab] ? startTab : 'ing');
+</script>
+</body>
+</html>
