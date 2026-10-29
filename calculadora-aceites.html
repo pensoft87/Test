@@ -430,7 +430,7 @@ function buildIngRows(need) {
     const pm = presMl(i); let packs = 0, cost = 0;
     if (short && pm > 0) { packs = Math.ceil((-diff) / pm - 1e-9); cost = packs * i.price; buyCost += cost; }
     if (ml > 0) ratio = Math.min(ratio, stock / ml);
-    ingRows.push({i, ml, grams: isUnit(i) ? null : ml * (num(i.density) || DEF_DENS), stock, diff, short, packs, cost});
+    ingRows.push({i, ml, left: Math.max(0, stock + packs * (pm > 0 ? pm : 0) - ml), grams: isUnit(i) ? null : ml * (num(i.density) || DEF_DENS), stock, diff, short, packs, cost});
   });
   ingRows.sort((a, b) => b.ml - a.ml);
   return {ingRows, ingCost, buyCost, ratio: isFinite(ratio) ? ratio : 0, missingPrices, shortCount: ingRows.filter(r => r.short).length};
@@ -679,14 +679,15 @@ function ingTableHtml(r) {
       <h2>Ingredientes necesarios</h2>
       <p class="hint">Lo que debes sacar de tu inventario. En <b>Comprar</b> aparece la presentación completa que tendrías que adquirir.</p>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>Ingrediente</th><th class="num">Necesario (ml / unid.)</th><th class="num">Peso (g)</th><th class="num">Stock (ml / unid.)</th><th class="num">Sobra / falta</th><th>Estado</th><th>Comprar</th><th class="num">Costo compra</th></tr></thead>
+        <thead><tr><th>Ingrediente</th><th class="num">Necesario (ml / unid.)</th><th class="num">Peso (g)</th><th class="num">Stock (ml / unid.)</th><th class="num">Sobra / falta</th><th>Estado</th><th>Comprar</th><th class="num">Costo compra</th><th class="num" title="Lo que te queda después de producir, contando lo que compres">Sobrante</th></tr></thead>
         <tbody>${r.ingRows.map(x => `<tr class="${x.short ? 'short' : ''}">
           <td>${esc(x.i.name)}${isUnit(x.i) ? ' <span class="pill warn">unid.</span>' : ''}</td><td class="num">${isUnit(x.i) ? nf(x.ml, 0) + ' unid.' : nf(x.ml, 1)}</td><td class="num">${x.grams === null ? '—' : nf(x.grams, 1)}</td><td class="num">${isUnit(x.i) ? nf(x.stock, 0) + ' unid.' : nf(x.stock, 1)}</td>
           <td class="num">${x.diff >= 0 ? '+' : '−'}${isUnit(x.i) ? nf(Math.abs(x.diff), 0) + ' unid.' : nf(Math.abs(x.diff), 1)}</td><td>${stockBadge(x)}</td>
           <td>${x.short ? (x.packs > 0 ? `${x.packs} × ${nf(x.i.qty, x.i.qty % 1 ? 2 : 0)} ${isUnit(x.i) ? 'unid.' : UNITS[x.i.unit].label}` : 'define presentación') + (x.i.store ? ` <span class="sub">· ${esc(x.i.store)}</span>` : '') : '—'}</td>
-          <td class="num">${x.short && x.cost > 0 ? money(x.cost) : '—'}</td></tr>`).join('')}
+          <td class="num">${x.short && x.cost > 0 ? money(x.cost) : '—'}</td>
+          <td class="num">${isUnit(x.i) ? nf(x.left, 0) + ' unid.' : nf(x.left, 1) + ' ml'}</td></tr>`).join('')}
         </tbody>
-        ${r.shortCount ? `<tfoot><tr><td colspan="7" style="text-align:right"><b>Total a comprar</b></td><td class="num"><b>${money(r.buyCost)}</b></td></tr></tfoot>` : ''}
+        ${r.shortCount ? `<tfoot><tr><td colspan="7" style="text-align:right"><b>Total a comprar</b></td><td class="num"><b>${money(r.buyCost)}</b></td><td></td></tr></tfoot>` : ''}
       </table></div>
     </div>`;
 }
